@@ -109,11 +109,14 @@ def extract_from_dxf(path: str) -> List[Component]:
         pos = _entity_pos(e)
         texts.append((pos, txt, e.dxf.layer))
 
-    # 1a) if there are no attributed device blocks but the drawing is a
-    #     graphical SLD (breaker labels as free text), use the graphical
-    #     extractor — it recovers panels, MCB+ELCB pairs and quantities.
-    has_attr_blocks = any(len(list(ins.attribs)) > 0 for ins in msp.query("INSERT"))
-    if not has_attr_blocks:
+    # 1a) if the drawing carries little structured device data in blocks but is
+    #     a graphical SLD (breaker labels as free text), use the graphical
+    #     extractor — it recovers panels, MCB+ELCB pairs and quantities. Blocks
+    #     with only empty or non-device attributes (floor markers, blank symbol
+    #     templates) do not count as structured device data.
+    device_blocks = sum(1 for ins in msp.query("INSERT")
+                        if _has_device_attrs(ins))
+    if device_blocks < 3:
         from .graphical import extract_graphical, is_graphical
         plain = [t for (_p, t, _l) in texts]
         if is_graphical(plain):
@@ -176,6 +179,19 @@ def extract_from_dxf(path: str) -> List[Component]:
 # --------------------------------------------------------------------------
 # helpers
 # --------------------------------------------------------------------------
+_DEVICE_ATTR_TAGS = (_ATTR_TAG | _ATTR_DESC |
+                     {"CURRENT_RATING", "RATING", "POLE", "NO.OF_POLE", "A", "KA"})
+
+
+def _has_device_attrs(ins) -> bool:
+    """True if a block reference carries a non-empty, device-relevant attribute."""
+    for a in ins.attribs:
+        tag = str(a.dxf.tag).upper().strip()
+        if tag in _DEVICE_ATTR_TAGS and str(a.dxf.text).strip():
+            return True
+    return False
+
+
 def _entity_text(e) -> str:
     try:
         if e.dxftype() == "MTEXT":
