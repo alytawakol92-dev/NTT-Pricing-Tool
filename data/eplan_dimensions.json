@@ -1,0 +1,9 @@
+{
+  "A9F74110": {"width_mm": 18.0, "height_mm": 85.0, "depth_mm": 78.5, "weight_kg": 0.12, "din_modules": 1.0, "source": "eplan-cache"},
+  "A9F74116": {"width_mm": 18.0, "height_mm": 85.0, "depth_mm": 78.5, "weight_kg": 0.12, "din_modules": 1.0, "source": "eplan-cache"},
+  "A9F74363": {"width_mm": 54.0, "height_mm": 85.0, "depth_mm": 78.5, "weight_kg": 0.36, "din_modules": 3.0, "source": "eplan-cache"},
+  "LV430770": {"width_mm": 105.0, "height_mm": 161.0, "depth_mm": 86.0, "weight_kg": 1.6, "din_modules": null, "source": "eplan-cache"},
+  "LV432893": {"width_mm": 105.0, "height_mm": 161.0, "depth_mm": 86.0, "weight_kg": 2.4, "din_modules": null, "source": "eplan-cache"},
+  "LV540306": {"width_mm": 352.0, "height_mm": 302.0, "depth_mm": 291.0, "weight_kg": 39.0, "din_modules": null, "source": "eplan-cache"},
+  "LC1D80M7": {"width_mm": 90.0, "height_mm": 155.0, "depth_mm": 122.0, "weight_kg": 2.1, "din_modules": null, "source": "eplan-cache"}
+}

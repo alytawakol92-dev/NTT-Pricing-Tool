@@ -1,0 +1,23 @@
+{
+  "currency": "USD",
+  "markup_pct": 18.0,
+  "discount_pct": 5.0,
+  "tax_pct": 14.0,
+  "labour_rate_per_component": 14.0,
+  "copper_price_per_kg": 12.0,
+  "busbar_price_per_kg": 15.0,
+  "current_density_a_per_mm2": 4.0,
+  "enclosure_markup_pct": 12.0,
+  "default_component_price": 30.0,
+  "match_threshold": 60.0,
+  "component_price_overrides": {
+    "LV540306": 6500.00
+  },
+  "enclosures": [
+    {"name": "Wall box 600x800x300", "width_mm": 600, "height_mm": 800, "depth_mm": 300, "price": 430.0, "ip_rating": "IP66", "material": "Powder-coated steel"},
+    {"name": "Floor 800x1800x400", "width_mm": 800, "height_mm": 1800, "depth_mm": 400, "price": 1180.0, "ip_rating": "IP55", "material": "Powder-coated steel"},
+    {"name": "Floor 800x2000x600", "width_mm": 800, "height_mm": 2000, "depth_mm": 600, "price": 1620.0, "ip_rating": "IP55", "material": "Powder-coated steel"},
+    {"name": "Floor 1000x2000x600", "width_mm": 1000, "height_mm": 2000, "depth_mm": 600, "price": 1980.0, "ip_rating": "IP55", "material": "Powder-coated steel"},
+    {"name": "Floor 1200x2000x600", "width_mm": 1200, "height_mm": 2000, "depth_mm": 600, "price": 2350.0, "ip_rating": "IP55", "material": "Powder-coated steel"}
+  ]
+}

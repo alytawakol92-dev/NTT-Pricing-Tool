@@ -1,0 +1,10 @@
+Circuit Ref,Description,Board,Load kW,Voltage,Phases,Power Factor,Breaker Rating A
+Q0,Main incomer from transformer,MDB,850,400,3,0.9,1600
+Q1,Distribution board DB-1 lighting & power,MDB,120,400,3,0.85,250
+Q2,Distribution board DB-2 HVAC & power,MDB,95,400,3,0.85,160
+Q3,Chiller unit,MDB,55,400,3,0.88,100
+Q4,Mechanical room isolator,MDB,90,400,3,0.85,160
+K1,Water pump motor 37kW,MDB,37,400,3,0.86,80
+K2,Air handling unit motor 22kW,MDB,22,400,3,0.86,50
+Q1-1,Lighting subfeed DB-1,DB-1,35,400,3,0.9,63
+Q2-1,HVAC subfeed DB-2,DB-2,18,400,3,0.85,32

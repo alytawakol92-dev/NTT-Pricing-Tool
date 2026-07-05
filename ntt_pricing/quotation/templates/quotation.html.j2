@@ -1,0 +1,135 @@
+<meta charset="utf-8">
+<title>{{ q.quote_number }} — {{ q.project_name }}</title>
+<style>
+  :root { --ink:#1a2332; --muted:#5b6472; --line:#dfe3ea; --brand:#0b5c3f;
+          --accent:#12805c; --warn:#b8860b; --err:#b23b3b; --bg:#fff; }
+  * { box-sizing:border-box; }
+  body { font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+         color:var(--ink); margin:0; padding:0; background:#eef1f5; }
+  .sheet { max-width:960px; margin:24px auto; background:var(--bg);
+           padding:48px 56px; box-shadow:0 2px 18px rgba(0,0,0,.08); }
+  header { display:flex; justify-content:space-between; align-items:flex-start;
+           border-bottom:3px solid var(--brand); padding-bottom:18px; }
+  .brand { font-size:26px; font-weight:800; color:var(--brand); letter-spacing:.5px; }
+  .brand small { display:block; font-size:12px; font-weight:500; color:var(--muted);
+                 letter-spacing:2px; text-transform:uppercase; margin-top:2px; }
+  .doc-title { text-align:right; }
+  .doc-title h1 { margin:0; font-size:22px; letter-spacing:3px; color:var(--muted); }
+  .meta { display:flex; gap:40px; margin:22px 0 8px; font-size:13px; }
+  .meta div span { display:block; color:var(--muted); font-size:11px;
+                   text-transform:uppercase; letter-spacing:1px; }
+  h2 { font-size:14px; text-transform:uppercase; letter-spacing:1.5px;
+       color:var(--brand); border-bottom:1px solid var(--line);
+       padding-bottom:6px; margin:34px 0 12px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; color:var(--muted); font-size:11px; text-transform:uppercase;
+       letter-spacing:.5px; border-bottom:2px solid var(--line); padding:8px 6px; }
+  td { padding:7px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  tbody tr:nth-child(even) { background:#f7f9fb; }
+  .cat { font-size:10px; padding:2px 7px; border-radius:10px; background:#e7f0ec;
+         color:var(--accent); font-weight:600; }
+  .totals { margin-left:auto; width:340px; margin-top:18px; }
+  .totals td { border:none; padding:5px 6px; }
+  .totals .grand td { border-top:2px solid var(--brand); font-size:17px;
+                      font-weight:800; padding-top:10px; }
+  .panel-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px;
+                margin:6px 0 4px; }
+  .stat { background:#f4f7f9; border:1px solid var(--line); border-radius:8px;
+          padding:12px 14px; }
+  .stat span { display:block; font-size:11px; color:var(--muted);
+               text-transform:uppercase; letter-spacing:.5px; }
+  .stat b { font-size:19px; }
+  ul.notes { font-size:12px; color:var(--muted); padding-left:18px; }
+  .issue { font-size:12.5px; padding:6px 10px; border-radius:6px; margin:4px 0; }
+  .issue.error { background:#fbecec; color:var(--err); border-left:3px solid var(--err); }
+  .issue.warning { background:#fdf6e6; color:var(--warn); border-left:3px solid var(--warn); }
+  .issue.info { background:#eef3f8; color:var(--muted); border-left:3px solid #9aa7b5; }
+  svg { max-width:100%; height:auto; border:1px solid var(--line); border-radius:8px;
+        background:#fbfcfd; }
+  footer { margin-top:40px; padding-top:14px; border-top:1px solid var(--line);
+           font-size:11px; color:var(--muted); display:flex; justify-content:space-between; }
+  @media print { body{background:#fff;} .sheet{box-shadow:none;margin:0;} }
+</style>
+
+<div class="sheet">
+  <header>
+    <div class="brand">NTT{% if company %} · {{ company }}{% endif %}
+      <small>Electrical Panel Solutions</small></div>
+    <div class="doc-title"><h1>QUOTATION</h1>
+      <div style="font-size:13px;margin-top:4px;color:var(--muted)">{{ q.quote_number }}</div>
+    </div>
+  </header>
+
+  <div class="meta">
+    <div><span>Client</span>{{ q.client_name }}</div>
+    <div><span>Project</span>{{ q.project_name }}</div>
+    <div><span>Date</span>{{ q.date or "—" }}</div>
+    <div><span>Currency</span>{{ q.currency }}</div>
+  </div>
+
+  {% if q.panel %}
+  <h2>Panel Design</h2>
+  <div class="panel-grid">
+    <div class="stat"><span>Enclosure (W×H×D)</span><b>{{ q.panel.width_mm|int }}×{{ q.panel.height_mm|int }}×{{ q.panel.depth_mm|int }}</b> mm</div>
+    <div class="stat"><span>Devices placed</span><b>{{ q.panel.placements|length }}</b></div>
+    <div class="stat"><span>Plate utilisation</span><b>{{ (q.panel.utilisation*100)|round(0)|int }}%</b></div>
+    <div class="stat"><span>Copper</span><b>{{ q.panel.total_copper_kg()|round(1) }}</b> kg</div>
+  </div>
+  {% if layout_svg %}<div style="margin-top:12px">{{ layout_svg|safe }}</div>{% endif %}
+  {% endif %}
+
+  <h2>Bill of Materials</h2>
+  <table>
+    <thead><tr>
+      <th>Ref</th><th>Description</th><th>Category</th>
+      <th class="num">Qty</th><th>Unit</th>
+      <th class="num">Unit&nbsp;{{ q.currency }}</th><th class="num">Total&nbsp;{{ q.currency }}</th>
+    </tr></thead>
+    <tbody>
+    {% for li in q.line_items %}
+      <tr>
+        <td>{{ li.ref }}</td>
+        <td>{{ li.description }}</td>
+        <td><span class="cat">{{ li.category }}</span></td>
+        <td class="num">{{ li.quantity|round(1) }}</td>
+        <td>{{ li.unit }}</td>
+        <td class="num">{{ "%.2f"|format(li.unit_price) }}</td>
+        <td class="num">{{ "%.2f"|format(li.total) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <table class="totals">
+    <tr><td>Material subtotal</td><td class="num">{{ "%.2f"|format(q.subtotal()) }}</td></tr>
+    {% for cat, amt in category_totals.items() %}
+      <tr><td style="color:var(--muted);font-size:12px;padding-left:14px">• {{ cat }}</td>
+          <td class="num" style="color:var(--muted);font-size:12px">{{ "%.2f"|format(amt) }}</td></tr>
+    {% endfor %}
+    {% if q.markup_pct %}<tr><td>Overhead &amp; margin ({{ q.markup_pct }}%)</td><td class="num">{{ "%.2f"|format(q.markup_amount()) }}</td></tr>{% endif %}
+    {% if q.discount_pct %}<tr><td>Discount ({{ q.discount_pct }}%)</td><td class="num">-{{ "%.2f"|format(q.discount_amount()) }}</td></tr>{% endif %}
+    <tr><td>Net total</td><td class="num">{{ "%.2f"|format(q.net_total()) }}</td></tr>
+    {% if q.tax_pct %}<tr><td>Tax ({{ q.tax_pct }}%)</td><td class="num">{{ "%.2f"|format(q.tax_amount()) }}</td></tr>{% endif %}
+    <tr class="grand"><td>TOTAL ({{ q.currency }})</td><td class="num">{{ "%.2f"|format(q.grand_total()) }}</td></tr>
+  </table>
+
+  {% if q.validation_issues %}
+  <h2>Load Schedule Validation</h2>
+  {% for i in q.validation_issues %}
+    <div class="issue {{ i.severity }}">
+      <b>{{ i.severity|upper }}</b>{% if i.circuit_ref %} · {{ i.circuit_ref }}{% endif %} — {{ i.message }}
+    </div>
+  {% endfor %}
+  {% endif %}
+
+  {% if q.notes %}
+  <h2>Notes</h2>
+  <ul class="notes">{% for n in q.notes %}<li>{{ n }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  <footer>
+    <span>Generated by NTT Pricing Tool</span>
+    <span>{{ q.quote_number }} · {{ q.date or "" }}</span>
+  </footer>
+</div>

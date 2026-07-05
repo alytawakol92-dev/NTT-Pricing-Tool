@@ -1,0 +1,33 @@
+Part Number,Description,Category,Unit Price,Currency,Manufacturer
+LV432893,Compact NSX250F MCCB 3P 250A 36kA TMD trip unit,MCCB,412.00,USD,Schneider Electric
+LV431630,Compact NSX160F MCCB 3P 160A 36kA TMD,MCCB,338.00,USD,Schneider Electric
+LV430770,Compact NSX100F MCCB 3P 100A 36kA TMD,MCCB,246.00,USD,Schneider Electric
+LV433304,Compact NSX400F MCCB 3P 400A 36kA Micrologic,MCCB,1180.00,USD,Schneider Electric
+LV433606,Compact NSX630F MCCB 3P 630A 36kA Micrologic 2.3,MCCB,1640.00,USD,Schneider Electric
+LV540306,Masterpact MTZ1 ACB 3P 1600A 42kA drawout,ACB,6850.00,USD,Schneider Electric
+LV847204,Masterpact MTZ2 ACB 3P 2500A 66kA fixed,ACB,11200.00,USD,Schneider Electric
+A9F74110,Acti9 iC60N MCB 1P 10A C curve 6kA,MCB,12.40,USD,Schneider Electric
+A9F74116,Acti9 iC60N MCB 1P 16A C curve 6kA,MCB,12.80,USD,Schneider Electric
+A9F74120,Acti9 iC60N MCB 1P 20A C curve 6kA,MCB,13.10,USD,Schneider Electric
+A9F74125,Acti9 iC60N MCB 1P 25A C curve 6kA,MCB,13.60,USD,Schneider Electric
+A9F74132,Acti9 iC60N MCB 1P 32A C curve 6kA,MCB,14.20,USD,Schneider Electric
+A9F74140,Acti9 iC60N MCB 1P 40A C curve 6kA,MCB,15.90,USD,Schneider Electric
+A9F74363,Acti9 iC60N MCB 3P 63A C curve 6kA,MCB,58.00,USD,Schneider Electric
+A9F74332,Acti9 iC60N MCB 3P 32A C curve 6kA,MCB,49.50,USD,Schneider Electric
+A9R61240,Acti9 iID RCCB 2P 40A 30mA type AC,RCCB,68.00,USD,Schneider Electric
+A9R61440,Acti9 iID RCCB 4P 40A 30mA type AC,RCCB,112.00,USD,Schneider Electric
+A9R61463,Acti9 iID RCCB 4P 63A 30mA type AC,RCCB,138.00,USD,Schneider Electric
+LC1D18M7,TeSys D contactor 3P 18A 7.5kW 220V coil,Contactor,78.00,USD,Schneider Electric
+LC1D32M7,TeSys D contactor 3P 32A 15kW 220V coil,Contactor,118.00,USD,Schneider Electric
+LC1D50AM7,TeSys D contactor 3P 50A 22kW 220V coil,Contactor,168.00,USD,Schneider Electric
+LC1D80M7,TeSys D contactor 3P 80A 37kW 220V coil,Contactor,262.00,USD,Schneider Electric
+LRD22,TeSys LRD thermal overload relay 16-24A,Overload Relay,64.00,USD,Schneider Electric
+LRD32,TeSys LRD thermal overload relay 23-32A,Overload Relay,72.00,USD,Schneider Electric
+LRD350,TeSys LRD thermal overload relay 37-50A,Overload Relay,118.00,USD,Schneider Electric
+INS250,Switch disconnector INS250 3P 250A,Isolator,318.00,USD,Schneider Electric
+INS160,Switch disconnector INS160 3P 160A,Isolator,244.00,USD,Schneider Electric
+A9L16632,Acti9 iPRD SPD 3P+N 20kA type 2 surge protection,Surge Protection Device,196.00,USD,Schneider Electric
+METSEPM2120,PowerLogic PM2120 power meter,Meter,392.00,USD,Schneider Electric
+METSEIEM3155,iEM3155 energy meter 63A Modbus,Meter,168.00,USD,Schneider Electric
+A9A27069,Acti9 comb busbar 3P 63A 12 module,Busbar,22.00,USD,Schneider Electric
+NSYTRV22,Linergy terminal block 2.5mm2 screw,Terminal Block,0.85,USD,Schneider Electric

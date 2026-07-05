@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ntt-pricing-tool"
+version = "1.0.0"
+description = "Automated quotation and panel design generation from AutoCAD single line diagrams"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "NTT" }]
+keywords = ["electrical", "switchgear", "quotation", "autocad", "eplan", "panel-design"]
+dependencies = [
+    "ezdxf>=1.1",
+    "openpyxl>=3.1",
+    "rapidfuzz>=3.0",
+    "requests>=2.28",
+    "Jinja2>=3.1",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
+
+[project.scripts]
+ntt-pricing = "ntt_pricing.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["ntt_pricing*"]
+
+[tool.setuptools.package-data]
+"ntt_pricing.quotation" = ["templates/*.j2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

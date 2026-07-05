@@ -1,0 +1,41 @@
+{
+  "drawing": "MDB-01 Single Line Diagram",
+  "boards": [
+    {
+      "name": "MDB",
+      "components": [
+        { "tag": "Q0",  "description": "Masterpact MTZ1 ACB 3P 1600A 42kA main incomer", "quantity": 1 },
+        { "tag": "M1",  "description": "PowerLogic PM2120 power meter", "quantity": 1 },
+        { "tag": "SPD1","description": "iPRD SPD 3P+N 20kA type 2 surge protection", "quantity": 1 },
+        { "tag": "Q1",  "description": "Compact NSX250F MCCB 3P 250A 36kA feeder to DB-1", "quantity": 1 },
+        { "tag": "Q2",  "description": "Compact NSX160F MCCB 3P 160A 36kA feeder to DB-2", "quantity": 1 },
+        { "tag": "Q3",  "description": "Compact NSX100F MCCB 3P 100A 36kA chiller feeder", "quantity": 1 },
+        { "tag": "Q4",  "description": "INS160 switch disconnector 3P 160A mechanical room", "quantity": 1 },
+        { "tag": "K1",  "description": "TeSys D contactor 3P 80A 37kW pump motor", "quantity": 1 },
+        { "tag": "F1",  "description": "TeSys LRD overload relay 37-50A pump", "quantity": 1 },
+        { "tag": "K2",  "description": "TeSys D contactor 3P 50A 22kW AHU motor", "quantity": 1 },
+        { "tag": "F2",  "description": "TeSys LRD overload relay 37-50A AHU", "quantity": 1 }
+      ]
+    },
+    {
+      "name": "DB-1",
+      "parent": "Q1",
+      "components": [
+        { "tag": "Q1-1", "description": "iC60N MCB 3P 63A C curve lighting subfeed", "quantity": 1 },
+        { "tag": "Q1-2", "description": "iC60N MCB 1P 20A C curve socket circuit", "quantity": 8 },
+        { "tag": "Q1-3", "description": "iC60N MCB 1P 16A C curve lighting circuit", "quantity": 10 },
+        { "tag": "R1",   "description": "iID RCCB 4P 40A 30mA type AC", "quantity": 2 }
+      ]
+    },
+    {
+      "name": "DB-2",
+      "parent": "Q2",
+      "components": [
+        { "tag": "Q2-1", "description": "iC60N MCB 3P 32A C curve HVAC subfeed", "quantity": 3 },
+        { "tag": "Q2-2", "description": "iC60N MCB 1P 25A C curve socket circuit", "quantity": 6 },
+        { "tag": "Q2-3", "description": "iC60N MCB 1P 32A C curve dedicated equipment", "quantity": 4 },
+        { "tag": "R2",   "description": "iID RCCB 4P 63A 30mA type AC", "quantity": 1 }
+      ]
+    }
+  ]
+}
