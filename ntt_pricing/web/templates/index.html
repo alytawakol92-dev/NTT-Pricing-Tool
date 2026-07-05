@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NTT Pricing Tool</title>
+<style>
+  :root{--brand:#0b5c3f;--accent:#12805c;--ink:#1a2332;--muted:#5b6472;
+        --line:#dfe3ea;--bg:#eef1f5;--err:#b23b3b;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+       color:var(--ink);background:var(--bg);}
+  header{background:var(--brand);color:#fff;padding:26px 0;}
+  .wrap{max-width:900px;margin:0 auto;padding:0 24px;}
+  header .wrap{display:flex;justify-content:space-between;align-items:center;}
+  .logo{font-size:24px;font-weight:800;letter-spacing:.5px;}
+  .logo small{display:block;font-size:11px;font-weight:500;letter-spacing:2px;
+              text-transform:uppercase;opacity:.8;margin-top:2px;}
+  .demo-link{color:#fff;font-size:13px;text-decoration:none;border:1px solid rgba(255,255,255,.5);
+             padding:8px 14px;border-radius:6px;}
+  .demo-link:hover{background:rgba(255,255,255,.12);}
+  main{max-width:900px;margin:26px auto;padding:0 24px 60px;}
+  .card{background:#fff;border-radius:12px;box-shadow:0 2px 14px rgba(0,0,0,.06);
+        padding:28px 30px;margin-bottom:22px;}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:1.3px;color:var(--brand);
+     margin:0 0 4px;}
+  .hint{color:var(--muted);font-size:13px;margin:0 0 18px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+  label{display:block;font-size:12px;font-weight:600;color:var(--muted);
+        margin-bottom:5px;}
+  label .req{color:var(--err);}
+  input[type=text],input[type=number],input[type=date],input[type=file]{
+    width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;
+    font-size:14px;background:#fbfcfd;}
+  input[type=file]{padding:8px;font-size:13px;}
+  input:focus{outline:none;border-color:var(--accent);}
+  .file-row{margin-bottom:16px;}
+  .file-row small{color:var(--muted);font-size:11.5px;}
+  .checks{display:flex;gap:24px;flex-wrap:wrap;margin-top:6px;}
+  .check{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);font-weight:500;}
+  .check input{width:16px;height:16px;}
+  .field{margin-bottom:2px;}
+  .actions{display:flex;gap:14px;align-items:center;margin-top:8px;}
+  button{background:var(--brand);color:#fff;border:none;padding:14px 30px;
+         font-size:15px;font-weight:700;border-radius:8px;cursor:pointer;letter-spacing:.3px;}
+  button:hover{background:var(--accent);}
+  .error{background:#fbecec;color:var(--err);border-left:4px solid var(--err);
+         padding:12px 16px;border-radius:8px;margin-bottom:20px;font-size:14px;}
+  .foot{color:var(--muted);font-size:12px;text-align:center;margin-top:10px;}
+  @media(max-width:640px){.grid,.grid-3{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="logo">NTT Pricing Tool<small>Electrical Panel Solutions</small></div>
+  <a class="demo-link" href="/demo">▶ Try with sample data</a>
+</div></header>
+
+<main>
+  {% if error %}<div class="error">⚠ {{ error }}</div>{% endif %}
+
+  <form method="post" action="/quote" enctype="multipart/form-data">
+    <div class="card">
+      <h2>1 · Inputs</h2>
+      <p class="hint">Upload your single line diagram and price list. Load schedule and pricing config are optional.</p>
+
+      <div class="file-row">
+        <label>Single line diagram <span class="req">*</span></label>
+        <input type="file" name="sld" accept=".dxf,.json" required>
+        <small>AutoCAD DXF (with device blocks) or a JSON export.</small>
+      </div>
+      <div class="file-row">
+        <label>Component price list <span class="req">*</span></label>
+        <input type="file" name="catalog" accept=".csv,.xlsx,.xlsm" required>
+        <small>Schneider (or any supplier) pricing sheet — CSV or Excel.</small>
+      </div>
+      <div class="grid">
+        <div class="file-row">
+          <label>Client load schedule</label>
+          <input type="file" name="schedule" accept=".csv,.xlsx,.xlsm">
+          <small>Enables cross-validation. CSV or Excel.</small>
+        </div>
+        <div class="file-row">
+          <label>Pricing config (JSON)</label>
+          <input type="file" name="config" accept=".json">
+          <small>Enclosure catalog, copper rates, overrides.</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>2 · Project details</h2>
+      <div class="grid-3">
+        <div class="field"><label>Project name</label><input type="text" name="project_name" placeholder="Warehouse MDB-01"></div>
+        <div class="field"><label>Client</label><input type="text" name="client_name" placeholder="Acme Foods Ltd"></div>
+        <div class="field"><label>Your company</label><input type="text" name="company" placeholder="NTT Switchgear"></div>
+        <div class="field"><label>Quote number</label><input type="text" name="quote_number" placeholder="Q-2026-014"></div>
+        <div class="field"><label>Date</label><input type="date" name="date"></div>
+        <div class="field"><label>Currency</label><input type="text" name="currency" placeholder="USD" value="USD"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3 · Commercial (optional overrides)</h2>
+      <p class="hint">Leave blank to use the config file or built-in defaults.</p>
+      <div class="grid-3">
+        <div class="field"><label>Markup %</label><input type="number" step="0.1" name="markup" placeholder="15"></div>
+        <div class="field"><label>Discount %</label><input type="number" step="0.1" name="discount" placeholder="0"></div>
+        <div class="field"><label>Tax %</label><input type="number" step="0.1" name="tax" placeholder="14"></div>
+        <div class="field"><label>Copper price / kg</label><input type="number" step="0.1" name="copper_price" placeholder="11.5"></div>
+        <div class="field"><label>Labour / device</label><input type="number" step="0.1" name="labour_rate" placeholder="12"></div>
+      </div>
+      <div class="checks">
+        <label class="check"><input type="checkbox" name="include_panel" checked> Design panel (Phase 2)</label>
+        <label class="check"><input type="checkbox" name="offline" checked> Offline (skip EPLAN API)</label>
+      </div>
+      <div class="field" style="margin-top:14px;max-width:360px">
+        <label>EPLAN API key (optional — uncheck Offline to use)</label>
+        <input type="text" name="eplan_key" placeholder="leave blank for cache + estimator">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="submit">Generate quotation →</button>
+      <span class="foot">Max {{ max_mb }} MB per file · runs locally on your machine</span>
+    </div>
+  </form>
+</main>
+</body>
+</html>

@@ -52,12 +52,29 @@ Dependencies: `ezdxf`, `openpyxl`, `rapidfuzz`, `requests`, `Jinja2`.
 
 ## Quick start
 
+### Web interface (upload files in your browser)
+
+```bash
+python -m ntt_pricing.web        # opens http://127.0.0.1:5000
+```
+
+A local upload page: drop in the single line diagram and price list (load
+schedule and pricing config optional), fill in the project details and any
+commercial overrides, and hit **Generate quotation**. You get the rendered
+quotation with a panel diagram plus HTML / PDF / CSV / JSON downloads — all
+processed locally, no data leaves your machine. Click **▶ Try with sample
+data** to see it run on the bundled example instantly.
+
+Options: `--port 8080`, `--host 0.0.0.0` (share on your LAN), `--no-browser`.
+
+### Command line / batch
+
 ```bash
 python examples/run_example.py
 # → output/sample_quote.html  (open in a browser, print to PDF)
 ```
 
-Or via the CLI:
+Or the full CLI:
 
 ```bash
 python -m ntt_pricing.cli quote \
@@ -146,6 +163,7 @@ ntt_pricing/
   layout/       3D placement, copper routing, enclosure sizing
   pricing/      component / copper / enclosure / labour line items
   quotation/    pipeline orchestration + HTML/JSON/CSV rendering
+  web/          local Flask upload interface (python -m ntt_pricing.web)
   cli.py        command-line interface
 data/           sample SLD, price list, load schedule, config
 examples/       run_example.py, generate_sample_dxf.py

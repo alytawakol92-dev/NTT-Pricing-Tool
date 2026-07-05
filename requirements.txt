@@ -4,6 +4,4 @@ openpyxl>=3.1     # Excel pricing sheets / load schedules
 rapidfuzz>=3.0    # fuzzy component matching
 requests>=2.28    # EPLAN Data Portal API client
 Jinja2>=3.1       # quotation HTML rendering
-
-# Optional (only for the DXF sample generator / screenshots)
-# ezdxf already covers DXF authoring
+Flask>=3.0        # local web upload interface (python -m ntt_pricing.web)
