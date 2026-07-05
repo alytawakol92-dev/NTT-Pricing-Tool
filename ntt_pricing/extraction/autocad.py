@@ -117,10 +117,17 @@ def extract_from_dxf(path: str) -> List[Component]:
     device_blocks = sum(1 for ins in msp.query("INSERT")
                         if _has_device_attrs(ins))
     if device_blocks < 3:
+        entries = [((p[0], p[1]), t) for (p, t, _l) in texts]
+        # a riser whose table text has collapsed onto a point → parse by the
+        # preserved entity reading order rather than position
+        from .riser import extract_riser, looks_like_stacked_riser
+        if looks_like_stacked_riser(entries):
+            comps = extract_riser(entries)
+            if comps:
+                return comps
         from .graphical import extract_graphical, is_graphical
         plain = [t for (_p, t, _l) in texts]
         if is_graphical(plain):
-            entries = [((p[0], p[1]), t) for (p, t, _l) in texts]
             comps = extract_graphical(entries)
             if comps:
                 return comps
