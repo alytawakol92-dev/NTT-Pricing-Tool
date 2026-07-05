@@ -21,6 +21,7 @@ import sys
 
 from .config import PricingConfig
 from .eplan import EplanClient
+from .offer import offer_from_result, write_commercial, write_technical
 from .quotation import generate_quotation, write_csv, write_html, write_json
 
 
@@ -41,6 +42,7 @@ def cmd_quote(args) -> int:
 
     eplan = EplanClient(api_key=args.eplan_key, offline=args.offline)
 
+    date = args.date or _today()
     result = generate_quotation(
         sld_path=args.sld,
         catalog_path=args.catalog,
@@ -49,7 +51,7 @@ def cmd_quote(args) -> int:
         project_name=args.project,
         client_name=args.client,
         quote_number=args.quote_number,
-        date=args.date or _today(),
+        date=date,
         eplan_client=eplan,
         include_panel=not args.no_panel,
     )
@@ -57,16 +59,48 @@ def cmd_quote(args) -> int:
 
     out_base = args.out
     os.makedirs(os.path.dirname(os.path.abspath(out_base)) or ".", exist_ok=True)
-    html_path = write_html(quote, out_base + ".html", company=args.company)
-    json_path = write_json(quote, out_base + ".json")
-    csv_path = write_csv(quote, out_base + ".csv")
+    written = []
+
+    fmt = args.format
+    if fmt in ("ntt", "both"):
+        offer = offer_from_result(
+            result, config, offer_no=args.quote_number, client=args.client,
+            project_name=args.project, date=date, code=args.code,
+            attention=args.attention)
+        tech = write_technical(offer, out_base + "_technical.html")
+        comm = write_commercial(offer, out_base + "_commercial.html")
+        written += [("Technical offer", tech), ("Commercial offer", comm)]
+        _print_offer_summary(offer)
+
+    if fmt in ("generic", "both"):
+        written.append(("Quotation HTML", write_html(quote, out_base + ".html", company=args.company)))
+        written.append(("Quotation JSON", write_json(quote, out_base + ".json")))
+        written.append(("BOM CSV", write_csv(quote, out_base + ".csv")))
+
+    if fmt == "ntt":
+        # still emit the component BOM + data alongside the NTT offer
+        written.append(("BOM CSV", write_csv(quote, out_base + ".csv")))
+        written.append(("Data JSON", write_json(quote, out_base + ".json")))
 
     _print_summary(result)
     print("\nOutputs written:")
-    print(f"  HTML : {html_path}")
-    print(f"  JSON : {json_path}")
-    print(f"  CSV  : {csv_path}")
+    for label, path in written:
+        print(f"  {label:<18}: {path}")
     return 0
+
+
+def _print_offer_summary(offer) -> None:
+    print("=" * 64)
+    print(f" NTT Offer {offer.offer_no} — {offer.project_name}")
+    print("=" * 64)
+    for p in offer.panels:
+        print(f"  Item {p.item_no}  {p.name:<12} {offer.currency_symbol} "
+              f"{p.unit_price:>12,.2f}   ({p.width_cm:g}x{p.height_cm:g}x{p.depth_cm:g} cm)")
+    print("-" * 64)
+    print(f"  {'Net total':<20}{offer.currency_symbol} {offer.net_total():>12,.2f}")
+    print(f"  {'VAT ' + str(offer.tax_pct) + '%':<20}{offer.currency_symbol} {offer.tax_amount():>12,.2f}")
+    print(f"  {'GRAND TOTAL':<20}{offer.currency_symbol} {offer.grand_total():>12,.2f}")
+    print("=" * 64)
 
 
 def _print_summary(result) -> None:
@@ -119,10 +153,16 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("--catalog", required=True, help="Supplier pricing sheet (.xlsx or .csv).")
     q.add_argument("--schedule", help="Client load schedule (.csv or .xlsx).")
     q.add_argument("--config", help="Pricing config JSON (enclosures, copper, markup...).")
+    q.add_argument("--format", choices=["ntt", "generic", "both"], default="ntt",
+                   help="Output format: 'ntt' technical+commercial offers (default), "
+                        "'generic' single quotation, or 'both'.")
     q.add_argument("--project", default="Untitled Project")
     q.add_argument("--client", default="Client")
     q.add_argument("--company", default="", help="Your company name for the header.")
-    q.add_argument("--quote-number", default="Q-0001")
+    q.add_argument("--quote-number", default="Q-0001",
+                   help="Offer / quote number.")
+    q.add_argument("--code", default="", help="Client code (commercial offer).")
+    q.add_argument("--attention", default="", help="Attention contact (commercial offer).")
     q.add_argument("--date", default="", help="Quote date (default: today).")
     q.add_argument("--out", default="quotation", help="Output path prefix.")
     q.add_argument("--currency")

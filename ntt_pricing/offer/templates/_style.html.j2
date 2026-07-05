@@ -1,0 +1,40 @@
+<style>
+  :root{--brand:#0b5c3f;--accent:#12805c;--ink:#1a2332;--muted:#5b6472;
+        --line:#d7dce3;--bg:#eef1f5;--head:#0b5c3f;--zebra:#f4f8f6;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--ink);background:var(--bg);font-size:12.5px;}
+  .page{width:816px;min-height:1056px;margin:18px auto;background:#fff;
+        box-shadow:0 2px 16px rgba(0,0,0,.09);padding:40px 46px;position:relative;
+        display:flex;flex-direction:column;}
+  .page + .page{margin-top:0;}
+  /* letterhead */
+  .lh{display:flex;justify-content:space-between;align-items:flex-start;
+      border-bottom:3px solid var(--brand);padding-bottom:12px;}
+  .lh .brand{font-size:20px;font-weight:800;color:var(--brand);line-height:1.15;}
+  .lh .brand .ar{font-size:14px;font-weight:700;color:var(--ink);}
+  .lh .brand small{display:block;font-size:10.5px;font-weight:600;color:var(--muted);
+                   letter-spacing:.4px;margin-top:3px;text-transform:none;}
+  .lh .doc{text-align:right;}
+  .lh .doc h1{margin:0;font-size:18px;letter-spacing:3px;color:var(--muted);}
+  .lh .doc .no{font-size:12px;color:var(--brand);font-weight:700;margin-top:4px;}
+  /* footer */
+  .ft{margin-top:auto;padding-top:12px;border-top:1px solid var(--line);
+      font-size:9.5px;color:var(--muted);text-align:center;line-height:1.5;}
+  .ft b{color:var(--brand);}
+  /* meta strip */
+  .meta{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0 6px;}
+  .meta div{font-size:12px;}
+  .meta span{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.8px;
+             color:var(--muted);margin-bottom:2px;}
+  h2.sec{font-size:12px;text-transform:uppercase;letter-spacing:1.4px;color:var(--brand);
+         border-bottom:1px solid var(--line);padding-bottom:5px;margin:20px 0 10px;}
+  /* generic tables */
+  table{width:100%;border-collapse:collapse;}
+  @media print{
+    body{background:#fff;}
+    .page{box-shadow:none;margin:0;width:auto;min-height:auto;
+          page-break-after:always;padding:26px 30px;}
+    .page:last-child{page-break-after:auto;}
+  }
+</style>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Technical Offer — {{ o.offer_no }}</title>
+{% include "_style.html.j2" %}
+<style>
+  .install{display:grid;grid-template-columns:repeat(2,1fr);gap:0 26px;
+           border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:14px;}
+  .install .row{display:flex;justify-content:space-between;font-size:11px;
+                padding:4px 0;border-bottom:1px dotted var(--line);}
+  .install .row b{color:var(--muted);font-weight:600;}
+  .install .row span{font-weight:600;color:var(--ink);text-align:right;}
+  .panelbar{display:flex;justify-content:space-between;align-items:center;
+            background:var(--brand);color:#fff;border-radius:8px;padding:9px 16px;margin:14px 0 12px;}
+  .panelbar .nm{font-size:15px;font-weight:800;letter-spacing:.5px;}
+  .panelbar .qty{font-size:11px;opacity:.9;}
+  table.bom{font-size:11px;border:1px solid var(--line);}
+  table.bom th{background:var(--head);color:#fff;font-size:10px;text-transform:uppercase;
+               letter-spacing:.5px;padding:6px 8px;text-align:left;}
+  table.bom th.c,table.bom td.c{text-align:center;width:44px;}
+  table.bom th.r,table.bom td.r{width:120px;}
+  table.bom td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
+  table.bom tr:nth-child(even) td{background:var(--zebra);}
+  tr.grp td{background:#e7f0ec !important;color:var(--brand);font-weight:800;
+            font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:5px 8px;}
+  .dims{margin-top:12px;font-size:11.5px;border-left:3px solid var(--accent);
+        background:var(--zebra);padding:8px 12px;border-radius:0 6px 6px 0;}
+  .dims b{color:var(--brand);}
+</style>
+</head><body>
+{% import "_letterhead.html.j2" as L %}
+
+{{ L.cover(o, "Technical Offer") }}
+
+{% for p in o.panels %}
+<div class="page">
+  {{ L.letterhead(o, "Technical Offer") }}
+  <div class="panelbar">
+    <div class="nm">Item {{ p.item_no }} · {{ p.name }}</div>
+    <div class="qty">QTY: {{ p.quantity }}</div>
+  </div>
+
+  <div class="install">
+    <div class="row"><b>Panel Installation</b><span>{{ p.install.mounting }}</span></div>
+    <div class="row"><b>Voltage System</b><span>{{ p.install.voltage_system }}</span></div>
+    <div class="row"><b>Control Voltage</b><span>{{ p.install.control_voltage }}</span></div>
+    <div class="row"><b>Enclosure Type</b><span>{{ p.install.enclosure_type }}</span></div>
+    <div class="row"><b>IP Rating</b><span>{{ p.install.ip_rating }}</span></div>
+    <div class="row"><b>Enclosure Material</b><span>{{ p.install.enclosure_material }}</span></div>
+    <div class="row"><b>Main B.B Rating</b><span>{{ p.main_bb_rating or "—" }}</span></div>
+    <div class="row"><b>Main B.B Sizing</b><span>{{ p.install.main_bb_sizing or "—" }}</span></div>
+    <div class="row"><b>Cu Insulation</b><span>{{ p.install.cu_insulation }}</span></div>
+    <div class="row"><b>Neutral B.B</b><span>{{ p.install.neutral_bb }}</span></div>
+    <div class="row"><b>Earth B.B</b><span>{{ p.install.earth_bb }}</span></div>
+    <div class="row"><b>Color</b><span>{{ p.install.color_ral }}</span></div>
+    <div class="row"><b>Form</b><span>{{ p.install.form }}</span></div>
+    <div class="row"><b>Temperature</b><span>{{ p.install.temperature }}</span></div>
+    <div class="row"><b>Incoming / Outgoing</b><span>{{ p.install.incoming_position }} / {{ p.install.outgoing_position }}</span></div>
+    <div class="row"><b>Control Wire Size</b><span>{{ p.install.control_wire_size }}</span></div>
+  </div>
+
+  <table class="bom">
+    <thead><tr><th class="c">QTY</th><th class="r">REF</th><th class="r">Brand</th><th>Description</th></tr></thead>
+    <tbody>
+    {% for group, lines in p.grouped_lines().items() %}
+      <tr class="grp"><td colspan="4">{{ group }}</td></tr>
+      {% for ln in lines %}
+      <tr>
+        <td class="c">{{ ln.qty }}</td>
+        <td class="r">{{ ln.ref }}</td>
+        <td class="r">{{ ln.brand }}</td>
+        <td>{{ ln.description }}</td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="dims">
+    <b>Suggested dimensions for panel:</b>
+    {{ p.install.enclosure_type }} {{ p.dimensions_text() }}
+  </div>
+
+  {{ L.footer(o) }}
+</div>
+{% endfor %}
+</body></html>

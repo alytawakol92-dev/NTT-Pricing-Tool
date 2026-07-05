@@ -3,9 +3,11 @@
 Automated **quotation and panel-design generation** for electrical switchgear.
 
 Feed it a single line diagram, a client load schedule and your Schneider
-component price list, and it produces a professional, itemised quotation —
-bill of materials, validated against the load schedule, plus a fully
-dimensioned 3D panel layout with copper and enclosure costs.
+component price list, and it produces the NTT / Al-Tawakol house offer —
+a **Technical Offer** (per-panel spec sheets with grouped bills of material
+and suggested dimensions) and a **Commercial Offer** (per-panel pricing,
+grand total + VAT, terms & conditions and signatures) — validated against
+the load schedule and backed by a fully dimensioned 3D panel layout.
 
 ```
  AutoCAD SLD ─┐
@@ -39,8 +41,28 @@ dimensioned 3D panel layout with copper and enclosure costs.
    conductor from its current.
 9. **Size the enclosure** — the smallest standard box that fits everything
    (or a custom size), then price enclosure + copper + labour.
-10. **Output** a professional quotation: HTML (print-to-PDF) with a panel
-    diagram, plus JSON and CSV.
+10. **Output** the NTT two-document offer plus supporting files.
+
+## Output: the NTT offer format
+
+Each **board** on the diagram (MDB, DB-1, …) becomes a separate physical
+panel with its own enclosure, spec sheet and price. The tool produces:
+
+* **Technical Offer** — a cover page then one spec sheet per panel: the
+  construction parameters block (voltage system, mounting, IP, material,
+  main busbar rating, RAL, form…), the bill of materials as
+  `QTY · REF · Brand · Description` grouped into **INCOMING /
+  INDICATION & INSTRUMENTS / OUTGOING** (with the standard indication lamps
+  + fuse fitted automatically), and the suggested panel dimensions. No prices.
+* **Commercial Offer** — a per-panel price table (`Item · Panel · Qty ·
+  Unit · Total`), the grand total with VAT, the bilingual (EN/AR) terms &
+  conditions and the signature block.
+
+The letterhead, panel defaults, standard accessories, VAT, currency,
+signatories and contacts are all overridable from the pricing config, so the
+same engine can serve a different panel builder. Two supporting files are
+also emitted: a component-level **BOM (CSV)** and the **panel-layout
+quotation** (HTML with the 3D layout diagram).
 
 ## Install
 
@@ -60,10 +82,11 @@ python -m ntt_pricing.web        # opens http://127.0.0.1:5000
 
 A local upload page: drop in the single line diagram and price list (load
 schedule and pricing config optional), fill in the project details and any
-commercial overrides, and hit **Generate quotation**. You get the rendered
-quotation with a panel diagram plus HTML / PDF / CSV / JSON downloads — all
-processed locally, no data leaves your machine. Click **▶ Try with sample
-data** to see it run on the bundled example instantly.
+commercial overrides, and hit **Generate quotation**. You get the **Technical
+Offer** and **Commercial Offer** (open/print to PDF), a per-panel price
+summary, and downloads for both offers, the component BOM (CSV) and the
+panel-layout quotation — all processed locally, no data leaves your machine.
+Click **▶ Try with sample data** to see it run on the bundled example instantly.
 
 Options: `--port 8080`, `--host 0.0.0.0` (share on your LAN), `--no-browser`.
 
@@ -85,12 +108,14 @@ python -m ntt_pricing.cli quote \
     --project   "Warehouse MDB-01" \
     --client    "Acme Foods Ltd" \
     --company   "NTT Switchgear" \
-    --quote-number Q-2026-014 \
+    --quote-number 121-6-2026-R01 \
     --offline \
-    --out output/quote
+    --out output/offer
 ```
 
-Outputs `quote.html`, `quote.json`, `quote.csv`.
+Outputs `offer_technical.html`, `offer_commercial.html` (+ a supporting
+`offer.csv` / `offer.json`). Add `--format generic` for the single-document
+panel quotation instead, or `--format both`.
 
 ### Key CLI options
 
@@ -99,7 +124,8 @@ Outputs `quote.html`, `quote.json`, `quote.csv`.
 | `--sld` | Single line diagram: `.dxf` or `.json` |
 | `--catalog` | Supplier price list: `.xlsx` or `.csv` |
 | `--schedule` | Client load schedule (optional): `.csv` / `.xlsx` |
-| `--config` | Pricing config JSON (enclosures, copper, markup…) |
+| `--config` | Pricing config JSON (enclosures, copper, markup, letterhead…) |
+| `--format` | `ntt` (technical + commercial, default), `generic`, or `both` |
 | `--offline` | Skip the EPLAN API; use cache + estimator |
 | `--no-panel` | Phase 1 only (costing, no panel design) |
 | `--markup / --tax / --copper-price` | Quick overrides |
@@ -162,7 +188,8 @@ ntt_pricing/
   eplan/        EPLAN Data Portal client + dimension estimator
   layout/       3D placement, copper routing, enclosure sizing
   pricing/      component / copper / enclosure / labour line items
-  quotation/    pipeline orchestration + HTML/JSON/CSV rendering
+  quotation/    generic quotation orchestration + HTML/JSON/CSV rendering
+  offer/        NTT technical + commercial offer format (profile, builder, docs)
   web/          local Flask upload interface (python -m ntt_pricing.web)
   cli.py        command-line interface
 data/           sample SLD, price list, load schedule, config

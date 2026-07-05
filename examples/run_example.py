@@ -14,7 +14,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ntt_pricing.config import PricingConfig
 from ntt_pricing.eplan import EplanClient
-from ntt_pricing.quotation import generate_quotation, write_csv, write_html, write_json
+from ntt_pricing.offer import (offer_from_result, write_commercial,
+                               write_technical)
+from ntt_pricing.quotation import generate_quotation, write_csv, write_html
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
@@ -32,20 +34,29 @@ def main() -> None:
         config=config,
         project_name="Warehouse MDB-01",
         client_name="Acme Foods Ltd",
-        quote_number="Q-2026-014",
+        quote_number="121-6-2026-R01",
         date="2026-07-05",
         eplan_client=EplanClient(offline=True),   # use estimator/cache offline
     )
 
-    q = result.quotation
-    write_html(q, os.path.join(OUT, "sample_quote.html"), company="NTT Switchgear")
-    write_json(q, os.path.join(OUT, "sample_quote.json"))
-    write_csv(q, os.path.join(OUT, "sample_quote.csv"))
+    # NTT two-document offer (primary deliverable)
+    offer = offer_from_result(
+        result, config, offer_no="121-6-2026-R01", client="Acme Foods Ltd",
+        project_name="Warehouse MDB-01", date="2026-07-05",
+        attention="Eng. Ahmed")
+    write_technical(offer, os.path.join(OUT, "technical_offer.html"))
+    write_commercial(offer, os.path.join(OUT, "commercial_offer.html"))
 
-    print(f"Devices: {len(result.components)}  "
-          f"Panel: {result.panel.width_mm:.0f}x{result.panel.height_mm:.0f}x{result.panel.depth_mm:.0f} mm  "
-          f"Total: {q.currency} {q.grand_total():,.2f}")
-    print(f"Wrote quotation to {OUT}/sample_quote.html")
+    # supporting component BOM + panel-layout quotation
+    write_csv(result.quotation, os.path.join(OUT, "bill_of_materials.csv"))
+    write_html(result.quotation, os.path.join(OUT, "panel_quotation.html"),
+               company="NTT Switchgear")
+
+    print(f"Panels: {len(offer.panels)}  Devices: {len(result.components)}  "
+          f"Grand total: {offer.currency_symbol} {offer.grand_total():,.2f}")
+    for p in offer.panels:
+        print(f"  Item {p.item_no}  {p.name:<10} {offer.currency_symbol} {p.unit_price:>11,.2f}")
+    print(f"Wrote technical + commercial offers to {OUT}/")
 
 
 if __name__ == "__main__":

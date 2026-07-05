@@ -31,11 +31,15 @@ def test_demo_flow(client):
     r = client.get("/demo")
     assert r.status_code == 302
     token = r.headers["Location"].rstrip("/").split("/")[-1]
-    # result page + downloads
+    # result page + documents
     assert client.get(f"/result/{token}").status_code == 200
-    assert client.get(f"/result/{token}/view").status_code == 200
-    for fmt in ("html", "json", "csv"):
-        assert client.get(f"/result/{token}/download/{fmt}").status_code == 200
+    for name in ("commercial", "technical", "quote", "csv", "json"):
+        assert client.get(f"/result/{token}/doc/{name}").status_code == 200
+        assert client.get(f"/result/{token}/download/{name}").status_code == 200
+    # commercial offer content is present
+    comm = client.get(f"/result/{token}/doc/commercial")
+    assert b"COMMERCIAL OFFER" in comm.data
+    assert b"Financial Offer" in comm.data
 
 
 def test_quote_upload(client):
@@ -49,8 +53,15 @@ def test_quote_upload(client):
     assert r.status_code == 302
     assert "/result/" in r.headers["Location"]
     token = r.headers["Location"].rstrip("/").split("/")[-1]
-    view = client.get(f"/result/{token}/view")
-    assert b"QUOTATION" in view.data
+    tech = client.get(f"/result/{token}/doc/technical")
+    assert b"TECHNICAL OFFER" in tech.data
+    assert b"INCOMING" in tech.data
+
+
+def test_unknown_doc_404(client):
+    r = client.get("/demo")
+    token = r.headers["Location"].rstrip("/").split("/")[-1]
+    assert client.get(f"/result/{token}/doc/nope").status_code == 404
 
 
 def test_missing_required_file_redirects_with_error(client):

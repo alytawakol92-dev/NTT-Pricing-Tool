@@ -27,6 +27,7 @@ from werkzeug.utils import secure_filename
 
 from ..config import PricingConfig
 from ..eplan import EplanClient
+from ..offer import offer_from_result, write_commercial, write_technical
 from ..quotation import generate_quotation, write_csv, write_html, write_json
 
 # where uploads + generated quotations for each run are stored
@@ -80,11 +81,13 @@ def create_app() -> Flask:
             catalog_path=os.path.join(DATA_DIR, "sample_pricing.csv"),
             schedule_path=os.path.join(DATA_DIR, "sample_load_schedule.csv"),
             config=cfg, project_name="Warehouse MDB-01 (sample)",
-            client_name="Acme Foods Ltd", quote_number="Q-DEMO",
+            client_name="Acme Foods Ltd", quote_number="121-6-2026-R01",
             date=datetime.date.today().isoformat(),
             eplan_client=EplanClient(offline=True))
-        _write_outputs(res.quotation, run_dir, company="NTT Switchgear")
-        _write_meta(run_dir, res)
+        _finalize(run_dir, res, cfg, {
+            "quote_number": "121-6-2026-R01", "client_name": "Acme Foods Ltd",
+            "project_name": "Warehouse MDB-01 (sample)",
+            "date": datetime.date.today().isoformat()}, company="NTT Switchgear")
         return redirect(url_for("result", token=token))
 
     @app.route("/result/<token>")
@@ -93,26 +96,36 @@ def create_app() -> Flask:
         meta = _read_meta(run_dir)
         return render_template("result.html", token=token, meta=meta)
 
-    @app.route("/result/<token>/view")
-    def result_view(token):
-        run_dir = _safe_run_dir(token)
-        path = os.path.join(run_dir, "quote.html")
-        if not os.path.exists(path):
-            abort(404)
-        return send_file(path)
+    # inline document view (for the iframe / open-in-tab)
+    @app.route("/result/<token>/doc/<name>")
+    def result_doc(token, name):
+        return _serve(_safe_run_dir(token), name, attachment=False)
 
-    @app.route("/result/<token>/download/<fmt>")
-    def download(token, fmt):
-        run_dir = _safe_run_dir(token)
-        if fmt not in ("html", "json", "csv"):
-            abort(404)
-        path = os.path.join(run_dir, f"quote.{fmt}")
-        if not os.path.exists(path):
-            abort(404)
-        return send_file(path, as_attachment=True,
-                         download_name=f"quotation.{fmt}")
+    @app.route("/result/<token>/download/<name>")
+    def download(token, name):
+        return _serve(_safe_run_dir(token), name, attachment=True)
 
     return app
+
+
+# map friendly document names → (filename, download name)
+_DOCS = {
+    "commercial": ("commercial.html", "commercial_offer.html"),
+    "technical": ("technical.html", "technical_offer.html"),
+    "quote": ("quote.html", "panel_quotation.html"),
+    "csv": ("quote.csv", "bill_of_materials.csv"),
+    "json": ("quote.json", "quotation_data.json"),
+}
+
+
+def _serve(run_dir, name, attachment):
+    if name not in _DOCS:
+        abort(404)
+    fname, dl = _DOCS[name]
+    path = os.path.join(run_dir, fname)
+    if not os.path.exists(path):
+        abort(404)
+    return send_file(path, as_attachment=attachment, download_name=dl)
 
 
 # --------------------------------------------------------------------------
@@ -135,19 +148,24 @@ def _process(req, run_dir: str):
     include_panel = req.form.get("include_panel", "on") == "on"
     eplan_key = req.form.get("eplan_key", "").strip() or None
 
+    meta_form = {
+        "project_name": req.form.get("project_name", "Untitled Project").strip() or "Untitled Project",
+        "client_name": req.form.get("client_name", "Client").strip() or "Client",
+        "quote_number": req.form.get("quote_number", "Q-0001").strip() or "Q-0001",
+        "date": req.form.get("date", "").strip() or datetime.date.today().isoformat(),
+        "code": req.form.get("code", "").strip(),
+        "attention": req.form.get("attention", "").strip(),
+    }
     result = generate_quotation(
         sld_path=sld, catalog_path=catalog, schedule_path=schedule,
-        config=config,
-        project_name=req.form.get("project_name", "Untitled Project").strip() or "Untitled Project",
-        client_name=req.form.get("client_name", "Client").strip() or "Client",
-        quote_number=req.form.get("quote_number", "Q-0001").strip() or "Q-0001",
-        date=req.form.get("date", "").strip() or datetime.date.today().isoformat(),
+        config=config, project_name=meta_form["project_name"],
+        client_name=meta_form["client_name"], quote_number=meta_form["quote_number"],
+        date=meta_form["date"],
         eplan_client=EplanClient(api_key=eplan_key, offline=offline),
         include_panel=include_panel,
     )
-    _write_outputs(result.quotation, run_dir,
-                   company=req.form.get("company", "").strip())
-    _write_meta(run_dir, result)
+    _finalize(run_dir, result, config, meta_form,
+              company=req.form.get("company", "").strip())
     return result
 
 
@@ -182,39 +200,43 @@ def _save_upload(req, field, run_dir, allowed, required):
     return path
 
 
-def _write_outputs(quote, run_dir, company=""):
-    write_html(quote, os.path.join(run_dir, "quote.html"), company=company)
-    write_json(quote, os.path.join(run_dir, "quote.json"))
-    write_csv(quote, os.path.join(run_dir, "quote.csv"))
+def _finalize(run_dir, result, config, meta_form, company="") -> None:
+    """Build the NTT offer + generic quotation, write all documents and meta."""
+    offer = offer_from_result(
+        result, config, offer_no=meta_form["quote_number"],
+        client=meta_form["client_name"], project_name=meta_form["project_name"],
+        date=meta_form["date"], code=meta_form.get("code", ""),
+        attention=meta_form.get("attention", ""))
+
+    write_commercial(offer, os.path.join(run_dir, "commercial.html"))
+    write_technical(offer, os.path.join(run_dir, "technical.html"))
+    write_html(result.quotation, os.path.join(run_dir, "quote.html"), company=company)
+    write_json(result.quotation, os.path.join(run_dir, "quote.json"))
+    write_csv(result.quotation, os.path.join(run_dir, "quote.csv"))
+
+    _write_meta(run_dir, result, offer)
 
 
-def _write_meta(run_dir, result) -> None:
+def _write_meta(run_dir, result, offer) -> None:
     import json
-    q = result.quotation
     panel = result.panel
     meta = {
-        "project_name": q.project_name, "client_name": q.client_name,
-        "quote_number": q.quote_number, "date": q.date, "currency": q.currency,
+        "project_name": offer.project_name, "client_name": offer.client,
+        "quote_number": offer.offer_no, "date": offer.date,
+        "currency": offer.currency, "currency_symbol": offer.currency_symbol,
         "device_count": len(result.components),
         "matched": sum(1 for c in result.components if c.match and c.match.confident),
-        "grand_total": q.grand_total(),
-        "subtotal": q.subtotal(),
-        "category_totals": {li.category: 0 for li in q.line_items},
+        "net_total": offer.net_total(), "tax_pct": offer.tax_pct,
+        "tax_amount": offer.tax_amount(), "grand_total": offer.grand_total(),
+        "panel_count": len(offer.panels),
+        "panels": [{"item_no": p.item_no, "name": p.name,
+                    "dims": f"{p.width_cm:g}×{p.height_cm:g}×{p.depth_cm:g} cm",
+                    "unit_price": p.unit_price, "total_price": p.total_price}
+                   for p in offer.panels],
         "errors": sum(1 for i in result.issues if i.severity == "error"),
         "warnings": sum(1 for i in result.issues if i.severity == "warning"),
-        "panel": None,
+        "copper_kg": round(panel.total_copper_kg(), 1) if panel else 0,
     }
-    for li in q.line_items:
-        meta["category_totals"][li.category] = round(
-            meta["category_totals"].get(li.category, 0) + li.total, 2)
-    if panel:
-        meta["panel"] = {
-            "width": round(panel.width_mm), "height": round(panel.height_mm),
-            "depth": round(panel.depth_mm),
-            "copper_kg": round(panel.total_copper_kg(), 1),
-            "utilisation": round(panel.utilisation * 100),
-            "devices_placed": len(panel.placements),
-        }
     with open(os.path.join(run_dir, "meta.json"), "w", encoding="utf-8") as fh:
         json.dump(meta, fh)
 

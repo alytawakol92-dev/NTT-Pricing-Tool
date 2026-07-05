@@ -10,8 +10,10 @@ from .models import (Component, CatalogItem, Quotation, PanelLayout,
                      LineItem, Specification, DeviceType, Dimensions)
 from .quotation import (generate_quotation, PipelineResult, render_html,
                         write_html, write_json, write_csv)
+from .offer import (build_offer, offer_from_result, NTTOffer,
+                    write_technical, write_commercial)
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 __all__ = [
     "PricingConfig", "EnclosureTier",
@@ -19,5 +21,7 @@ __all__ = [
     "Specification", "DeviceType", "Dimensions",
     "generate_quotation", "PipelineResult",
     "render_html", "write_html", "write_json", "write_csv",
+    "build_offer", "offer_from_result", "NTTOffer",
+    "write_technical", "write_commercial",
     "__version__",
 ]

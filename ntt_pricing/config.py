@@ -86,6 +86,14 @@ class PricingConfig:
     match_threshold: float = 60.0        # minimum score to accept a match
     confident_threshold: float = 75.0
 
+    # NTT offer format
+    currency_symbol: str = ""            # "" → derived from currency code
+    include_standard_accessories: bool = True   # fit indication lamps + fuse per panel
+    panel_defaults: Dict[str, str] = field(default_factory=dict)   # PanelDefaults overrides
+    company: Dict[str, str] = field(default_factory=dict)          # CompanyProfile overrides
+    signatories: List[Dict[str, str]] = field(default_factory=list)  # [{title,name}]
+    contacts: List[str] = field(default_factory=list)
+
     # layout
     component_clearance_mm: float = 20.0   # gap between adjacent devices
     din_rail_pitch_mm: float = 150.0       # vertical spacing between rails
@@ -122,6 +130,13 @@ class PricingConfig:
         """Nearest wire price per metre for a given cross section."""
         key = _nearest_csa_key(csa_mm2, self.wire_price_per_meter.keys())
         return self.wire_price_per_meter[key]
+
+    def symbol(self) -> str:
+        """Currency symbol for display; falls back to a small lookup then the code."""
+        if self.currency_symbol:
+            return self.currency_symbol
+        return {"EUR": "€", "USD": "$", "GBP": "£", "EGP": "E£",
+                "AED": "د.إ", "SAR": "﷼"}.get(self.currency.upper(), self.currency)
 
     def csa_for_current(self, current_a: float) -> float:
         """Standard copper cross section (mm^2) sized for a current."""

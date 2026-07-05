@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ntt-pricing-tool"
-version = "1.0.0"
+version = "1.1.0"
 description = "Automated quotation and panel design generation from AutoCAD single line diagrams"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -32,6 +32,7 @@ include = ["ntt_pricing*"]
 
 [tool.setuptools.package-data]
 "ntt_pricing.quotation" = ["templates/*.j2"]
+"ntt_pricing.offer" = ["templates/*.j2"]
 "ntt_pricing.web" = ["templates/*.html"]
 
 [tool.pytest.ini_options]
