@@ -36,7 +36,7 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__
                         "..", "data")
 DATA_DIR = os.path.normpath(DATA_DIR)
 
-_ALLOWED_SLD = {".dxf", ".json"}
+_ALLOWED_SLD = {".dxf", ".dwg", ".json"}
 _ALLOWED_TABLE = {".csv", ".xlsx", ".xlsm"}
 _ALLOWED_CONFIG = {".json"}
 _MAX_MB = 25

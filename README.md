@@ -134,10 +134,20 @@ panel quotation instead, or `--format both`.
 ## Inputs
 
 ### Single line diagram
-* **DXF** — device symbols as block references (`INSERT`) carrying `TAG`,
-  `DESC`/`RATING`, `BOARD` attributes are read directly; otherwise text near a
-  symbol is associated by proximity. `examples/generate_sample_dxf.py` shows
-  the expected structure.
+* **DWG** — AutoCAD's binary format. Converted to DXF automatically when a
+  converter is installed: **LibreDWG** (`dwg2dxf`) or the **ODA File
+  Converter**, or point the tool at one with `NTT_DWG2DXF=/path/to/converter`.
+  If none is present, export the drawing to DXF from AutoCAD instead.
+* **DXF** — two styles are handled:
+  * **Block-based** — device symbols as block references (`INSERT`) carrying
+    `TAG`, `DESC`/`RATING`, `BOARD` attributes are read directly.
+  * **Graphical** — consultant drawings with no attributes, where devices are
+    free-text labels (`"50A / 10KA / MCB / ELCB / 30mA"`). The graphical
+    extractor recovers panels (by board-name proximity), MCB + ELCB pairs,
+    quantities and incomers, and aggregates identical ways into `N × …` lines.
+    **Pole count (1P/3P) is not in these labels** — it is shown graphically —
+    so it is inferred (default: ≥25A → 3P) and can be corrected via a load
+    schedule with a phases column.
 * **JSON** — a lossless export: `{"boards": [{"name", "parent", "components":
   [{"tag","description","quantity"}]}]}`. See `data/sample_sld.json`.
 
@@ -153,13 +163,23 @@ sizes and prices, markup/discount/tax, labour rate, per-part price
 **overrides**, and the matching thresholds. See
 [`ntt_pricing/config.py`](ntt_pricing/config.py) for every field.
 
-## EPLAN Data Portal
+## EPLAN Data Portal & panel dimensions
 
-`EplanClient` queries the portal for a matched part's mechanical envelope,
-caches every hit in `data/eplan_dimensions.json`, and falls back to a
-device-physics estimator when neither the API nor the cache can answer — so
-the pipeline always yields dimensions. Set `EPLAN_API_KEY` (or `--eplan-key`)
-to enable live lookups; omit it (or pass `--offline`) to run fully offline.
+The suggested panel size is **computed by the layout engine**: it places the
+components on the mounting plate and then selects the smallest enclosure from
+the configured catalog that fits. The component footprints come from the
+EPLAN Data Portal when an `EPLAN_API_KEY` is set, otherwise from the local
+cache (`data/eplan_dimensions.json`) and finally a device-physics estimator —
+so the pipeline always yields dimensions, but **offline runs use estimates,
+not authoritative EPLAN data**.
+
+Because the size is snapped to your enclosure catalog, the result matches your
+house standard only when that catalog holds your real stock sizes. Use
+`data/ntt_config.json` (NTT wall/floor sizes incl. 120×80×25) as a starting
+point — on the reference project the tool then suggests 100×80×25 cm against
+the engineer's 120×80×25 (same height/depth; sized up one step for spare
+ways). Set `EPLAN_API_KEY` (or `--eplan-key`) for authoritative footprints;
+omit it (or pass `--offline`) to run fully offline.
 
 ## Library API
 
@@ -182,7 +202,7 @@ write_html(q, "quote.html", company="NTT Switchgear")
 
 ```
 ntt_pricing/
-  extraction/   AutoCAD DXF + spec parsing
+  extraction/   AutoCAD DWG/DXF (block-based + graphical) + spec parsing
   database/     price-list loading + fuzzy matching
   loadschedule/ load-schedule parsing + cross-validation
   eplan/        EPLAN Data Portal client + dimension estimator

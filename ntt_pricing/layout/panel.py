@@ -24,9 +24,11 @@ _DEPTH_ALLOWANCE = 90.0  # wiring / door-mounted devices behind the plate front
 
 def build_panel(components: List[Component], config: PricingConfig
                 ) -> PanelLayout:
-    # try a couple of candidate plate widths and keep the tightest result
+    # try a range of candidate plate widths (portrait through landscape) and
+    # keep the tightest result — a wide plate yields a shorter, shallower
+    # wall-box shape, a narrow one a tall floor-standing shape.
     best: Optional[PanelLayout] = None
-    for plate_w in (500.0, 600.0, 700.0, 900.0):
+    for plate_w in (500.0, 600.0, 700.0, 800.0, 900.0, 1000.0, 1100.0):
         placements, used_w, used_h, max_d = place_components(
             components, config, plate_width_mm=plate_w)
         if not placements:

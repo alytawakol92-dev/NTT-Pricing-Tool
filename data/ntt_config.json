@@ -1,0 +1,47 @@
+{
+  "_comment": "NTT / Al-Tawakol house configuration. Replace prices, enclosure sizes and signatories with your actual standards.",
+  "currency": "EUR",
+  "currency_symbol": "€",
+  "markup_pct": 18.0,
+  "discount_pct": 0.0,
+  "tax_pct": 14.0,
+  "labour_rate_per_component": 14.0,
+  "copper_price_per_kg": 12.0,
+  "busbar_price_per_kg": 15.0,
+  "current_density_a_per_mm2": 4.0,
+  "enclosure_markup_pct": 12.0,
+  "default_component_price": 30.0,
+  "match_threshold": 60.0,
+  "include_standard_accessories": true,
+
+  "enclosures": [
+    {"name": "NTT Wall 60x40x25",   "width_mm": 600,  "height_mm": 400,  "depth_mm": 250, "price": 210.0, "ip_rating": "IP42", "material": "Galvanized Sheet Steel 2 mm"},
+    {"name": "NTT Wall 80x60x25",   "width_mm": 800,  "height_mm": 600,  "depth_mm": 250, "price": 320.0, "ip_rating": "IP42", "material": "Galvanized Sheet Steel 2 mm"},
+    {"name": "NTT Wall 100x80x25",  "width_mm": 1000, "height_mm": 800,  "depth_mm": 250, "price": 430.0, "ip_rating": "IP42", "material": "Galvanized Sheet Steel 2 mm"},
+    {"name": "NTT Wall 120x80x25",  "width_mm": 1200, "height_mm": 800,  "depth_mm": 250, "price": 520.0, "ip_rating": "IP42", "material": "Galvanized Sheet Steel 2 mm"},
+    {"name": "NTT Wall 120x100x25", "width_mm": 1200, "height_mm": 1000, "depth_mm": 250, "price": 640.0, "ip_rating": "IP42", "material": "Galvanized Sheet Steel 2 mm"},
+    {"name": "NTT Floor 80x180x40", "width_mm": 800,  "height_mm": 1800, "depth_mm": 400, "price": 1180.0, "ip_rating": "IP54", "material": "Galvanized Sheet Steel 2 mm"},
+    {"name": "NTT Floor 80x200x60", "width_mm": 800,  "height_mm": 2000, "depth_mm": 600, "price": 1620.0, "ip_rating": "IP54", "material": "Galvanized Sheet Steel 2 mm"},
+    {"name": "NTT Floor 120x200x60","width_mm": 1200, "height_mm": 2000, "depth_mm": 600, "price": 2350.0, "ip_rating": "IP54", "material": "Galvanized Sheet Steel 2 mm"}
+  ],
+
+  "panel_defaults": {
+    "voltage_system": "400/230 VAC",
+    "mounting": "Wall Mounted",
+    "control_voltage": "220 VAC",
+    "enclosure_type": "NTT Panel",
+    "ip_rating": "IP54",
+    "enclosure_material": "Galvanized Sheet Steel 2 mm",
+    "cu_insulation": "Tin Plated",
+    "color_ral": "RAL 7035",
+    "form": "Form 1",
+    "control_wire_size": "1.5 mm² (Voltage) - 2.5 mm² (Current)"
+  },
+
+  "signatories": [
+    {"title": "Sales Engineer", "name": "Eng. / Samer"},
+    {"title": "Sales Manager", "name": "Eng. / Ahmed Emam"},
+    {"title": "Technical Office Manager", "name": "Eng. / Mohamed Adel"}
+  ],
+  "contacts": ["Ms. Fatma: 01094779989", "Eng. Hend: 01030051953"]
+}

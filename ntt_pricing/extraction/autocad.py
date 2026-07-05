@@ -51,10 +51,8 @@ def extract_components(path: str) -> List[Component]:
                 "Install it with 'pip install ezdxf', or supply a JSON export."
             )
         if ext == ".dwg":
-            raise RuntimeError(
-                "DWG is a proprietary binary format; export the drawing to DXF "
-                "(R2010+) or JSON first."
-            )
+            from .dwg import convert_dwg_to_dxf
+            path = convert_dwg_to_dxf(path)
         return extract_from_dxf(path)
     raise ValueError(f"Unsupported single line diagram format: {ext}")
 
@@ -110,6 +108,19 @@ def extract_from_dxf(path: str) -> List[Component]:
             continue
         pos = _entity_pos(e)
         texts.append((pos, txt, e.dxf.layer))
+
+    # 1a) if there are no attributed device blocks but the drawing is a
+    #     graphical SLD (breaker labels as free text), use the graphical
+    #     extractor — it recovers panels, MCB+ELCB pairs and quantities.
+    has_attr_blocks = any(len(list(ins.attribs)) > 0 for ins in msp.query("INSERT"))
+    if not has_attr_blocks:
+        from .graphical import extract_graphical, is_graphical
+        plain = [t for (_p, t, _l) in texts]
+        if is_graphical(plain):
+            entries = [((p[0], p[1]), t) for (p, t, _l) in texts]
+            comps = extract_graphical(entries)
+            if comps:
+                return comps
 
     # 2) walk block references (device symbols)
     used_text_ids = set()
