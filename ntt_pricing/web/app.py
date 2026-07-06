@@ -171,6 +171,12 @@ def _process(req, run_dir: str):
         eplan_client=EplanClient(api_key=eplan_key, offline=offline),
         include_panel=include_panel,
     )
+    if not result.components:
+        raise _UserError(
+            "No devices could be read from the single line diagram, so the "
+            "offer is empty. The drawing's format may not be recognised — try "
+            "exporting it to DXF (or PDF with a text layer), or send the file "
+            "so the extractor can be tuned to it.")
     _finalize(run_dir, result, config, meta_form,
               company=req.form.get("company", "").strip())
     return result
