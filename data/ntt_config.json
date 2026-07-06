@@ -13,32 +13,388 @@
   "default_component_price": 30.0,
   "match_threshold": 60.0,
   "include_standard_accessories": true,
-
   "selection": {
-    "mccb_series_rules": [[630, "CVS", 25], [1000000, "NS", 50]],
-    "mcb_series": "iC60N",
+    "objective": "least_cost",
+    "preferred_series": [],
+    "allowed_manufacturers": [],
+    "default_min_ka": 15,
+    "mcb_default_ka": 10,
     "mcb_ref_prefix": "A9F",
-    "rccb_ref_prefix": "A9",
     "flat_feeder_amps": 50,
     "flat_feeder_poles": 3,
     "main_mccb_min_amps": 800,
     "reserve_kwhm_space": true,
-    "metering_enclosures": [[160, 140, 80, 25], [250, 140, 100, 30], [400, 180, 100, 30]],
-    "main_enclosure_cm": [200, 140, 60],
+    "metering_enclosures": [
+      [
+        160,
+        140,
+        80,
+        25
+      ],
+      [
+        250,
+        140,
+        100,
+        30
+      ],
+      [
+        400,
+        180,
+        100,
+        30
+      ]
+    ],
+    "main_enclosure_cm": [
+      200,
+      140,
+      60
+    ],
     "enabled": true
   },
-
   "enclosures": [
-    {"name": "NTT Wall 60x40x25",   "width_mm": 600,  "height_mm": 400,  "depth_mm": 250, "price": 210.0, "ip_rating": "IP42", "material": "Galvanized Sheet Steel 2 mm"},
-    {"name": "NTT Wall 80x60x25",   "width_mm": 800,  "height_mm": 600,  "depth_mm": 250, "price": 320.0, "ip_rating": "IP42", "material": "Galvanized Sheet Steel 2 mm"},
-    {"name": "NTT Wall 100x80x25",  "width_mm": 1000, "height_mm": 800,  "depth_mm": 250, "price": 430.0, "ip_rating": "IP42", "material": "Galvanized Sheet Steel 2 mm"},
-    {"name": "NTT Wall 120x80x25",  "width_mm": 1200, "height_mm": 800,  "depth_mm": 250, "price": 520.0, "ip_rating": "IP42", "material": "Galvanized Sheet Steel 2 mm"},
-    {"name": "NTT Wall 120x100x25", "width_mm": 1200, "height_mm": 1000, "depth_mm": 250, "price": 640.0, "ip_rating": "IP42", "material": "Galvanized Sheet Steel 2 mm"},
-    {"name": "NTT Floor 80x180x40", "width_mm": 800,  "height_mm": 1800, "depth_mm": 400, "price": 1180.0, "ip_rating": "IP54", "material": "Galvanized Sheet Steel 2 mm"},
-    {"name": "NTT Floor 80x200x60", "width_mm": 800,  "height_mm": 2000, "depth_mm": 600, "price": 1620.0, "ip_rating": "IP54", "material": "Galvanized Sheet Steel 2 mm"},
-    {"name": "NTT Floor 120x200x60","width_mm": 1200, "height_mm": 2000, "depth_mm": 600, "price": 2350.0, "ip_rating": "IP54", "material": "Galvanized Sheet Steel 2 mm"}
+    {
+      "name": "NTT 30x25x15",
+      "width_mm": 250.0,
+      "height_mm": 300.0,
+      "depth_mm": 150.0,
+      "price": 8.24,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 30x25x20",
+      "width_mm": 250.0,
+      "height_mm": 300.0,
+      "depth_mm": 200.0,
+      "price": 9.31,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 40x30x15",
+      "width_mm": 300.0,
+      "height_mm": 400.0,
+      "depth_mm": 150.0,
+      "price": 11.91,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 40x30x20",
+      "width_mm": 300.0,
+      "height_mm": 400.0,
+      "depth_mm": 200.0,
+      "price": 13.27,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 50x40x15",
+      "width_mm": 400.0,
+      "height_mm": 500.0,
+      "depth_mm": 150.0,
+      "price": 17.99,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 50x40x20",
+      "width_mm": 400.0,
+      "height_mm": 500.0,
+      "depth_mm": 200.0,
+      "price": 19.75,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 60x40x20",
+      "width_mm": 400.0,
+      "height_mm": 600.0,
+      "depth_mm": 200.0,
+      "price": 22.95,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 60x50x20",
+      "width_mm": 500.0,
+      "height_mm": 600.0,
+      "depth_mm": 200.0,
+      "price": 27.39,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 70x50x20",
+      "width_mm": 500.0,
+      "height_mm": 700.0,
+      "depth_mm": 200.0,
+      "price": 31.19,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 70x50x25",
+      "width_mm": 500.0,
+      "height_mm": 700.0,
+      "depth_mm": 250.0,
+      "price": 33.53,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 80x60x20",
+      "width_mm": 600.0,
+      "height_mm": 800.0,
+      "depth_mm": 200.0,
+      "price": 40.59,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 80x60x25",
+      "width_mm": 600.0,
+      "height_mm": 800.0,
+      "depth_mm": 250.0,
+      "price": 43.33,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 80x60x30",
+      "width_mm": 600.0,
+      "height_mm": 800.0,
+      "depth_mm": 300.0,
+      "price": 46.07,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 100x60x20",
+      "width_mm": 600.0,
+      "height_mm": 1000.0,
+      "depth_mm": 200.0,
+      "price": 49.35,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 100x60x25",
+      "width_mm": 600.0,
+      "height_mm": 1000.0,
+      "depth_mm": 250.0,
+      "price": 52.48,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 100x60x30",
+      "width_mm": 600.0,
+      "height_mm": 1000.0,
+      "depth_mm": 300.0,
+      "price": 55.61,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 100x80x20",
+      "width_mm": 800.0,
+      "height_mm": 1000.0,
+      "depth_mm": 200.0,
+      "price": 62.93,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 100x80x25",
+      "width_mm": 800.0,
+      "height_mm": 1000.0,
+      "depth_mm": 250.0,
+      "price": 66.45,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 100x80x30",
+      "width_mm": 800.0,
+      "height_mm": 1000.0,
+      "depth_mm": 300.0,
+      "price": 69.97,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 100x100x25",
+      "width_mm": 1000.0,
+      "height_mm": 1000.0,
+      "depth_mm": 250.0,
+      "price": 81.72,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 100x100x30",
+      "width_mm": 1000.0,
+      "height_mm": 1000.0,
+      "depth_mm": 300.0,
+      "price": 85.63,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 120x80x25",
+      "width_mm": 800.0,
+      "height_mm": 1200.0,
+      "depth_mm": 250.0,
+      "price": 77.95,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 120x80x30",
+      "width_mm": 800.0,
+      "height_mm": 1200.0,
+      "depth_mm": 300.0,
+      "price": 81.86,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 120x100x25",
+      "width_mm": 1000.0,
+      "height_mm": 1200.0,
+      "depth_mm": 250.0,
+      "price": 95.82,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 120x100x30",
+      "width_mm": 1000.0,
+      "height_mm": 1200.0,
+      "depth_mm": 300.0,
+      "price": 100.12,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 140x80x25",
+      "width_mm": 800.0,
+      "height_mm": 1400.0,
+      "depth_mm": 250.0,
+      "price": 89.44,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 140x80x30",
+      "width_mm": 800.0,
+      "height_mm": 1400.0,
+      "depth_mm": 300.0,
+      "price": 93.75,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 140x100x25",
+      "width_mm": 1000.0,
+      "height_mm": 1400.0,
+      "depth_mm": 250.0,
+      "price": 109.92,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 140x100x30",
+      "width_mm": 1000.0,
+      "height_mm": 1400.0,
+      "depth_mm": 300.0,
+      "price": 114.61,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 140x120x30",
+      "width_mm": 1200.0,
+      "height_mm": 1400.0,
+      "depth_mm": 300.0,
+      "price": 133.66,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 160x80x30",
+      "width_mm": 800.0,
+      "height_mm": 1600.0,
+      "depth_mm": 300.0,
+      "price": 122.52,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 160x80x40",
+      "width_mm": 800.0,
+      "height_mm": 1600.0,
+      "depth_mm": 400.0,
+      "price": 131.9,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 160x100x30",
+      "width_mm": 1000.0,
+      "height_mm": 1600.0,
+      "depth_mm": 300.0,
+      "price": 148.03,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 160x100x40",
+      "width_mm": 1000.0,
+      "height_mm": 1600.0,
+      "depth_mm": 400.0,
+      "price": 158.2,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT 160x120x40",
+      "width_mm": 1200.0,
+      "height_mm": 1600.0,
+      "depth_mm": 400.0,
+      "price": 182.42,
+      "ip_rating": "IP42",
+      "material": "Galvanized Sheet Steel"
+    },
+    {
+      "name": "NTT Floor 180x100x40",
+      "width_mm": 1000,
+      "height_mm": 1800,
+      "depth_mm": 400,
+      "price": 320.0,
+      "ip_rating": "IP54",
+      "material": "Floor-standing (est.)"
+    },
+    {
+      "name": "NTT Floor 200x140x60",
+      "width_mm": 1400,
+      "height_mm": 2000,
+      "depth_mm": 600,
+      "price": 520.0,
+      "ip_rating": "IP54",
+      "material": "Floor-standing (est.)"
+    },
+    {
+      "name": "NTT Floor 200x160x60",
+      "width_mm": 1600,
+      "height_mm": 2000,
+      "depth_mm": 600,
+      "price": 610.0,
+      "ip_rating": "IP54",
+      "material": "Floor-standing (est.)"
+    }
   ],
-
   "panel_defaults": {
     "voltage_system": "400/230 VAC",
     "mounting": "Wall Mounted",
@@ -51,11 +407,22 @@
     "form": "Form 1",
     "control_wire_size": "1.5 mm² (Voltage) - 2.5 mm² (Current)"
   },
-
   "signatories": [
-    {"title": "Sales Engineer", "name": "Eng. / Samer"},
-    {"title": "Sales Manager", "name": "Eng. / Ahmed Emam"},
-    {"title": "Technical Office Manager", "name": "Eng. / Mohamed Adel"}
+    {
+      "title": "Sales Engineer",
+      "name": "Eng. / Samer"
+    },
+    {
+      "title": "Sales Manager",
+      "name": "Eng. / Ahmed Emam"
+    },
+    {
+      "title": "Technical Office Manager",
+      "name": "Eng. / Mohamed Adel"
+    }
   ],
-  "contacts": ["Ms. Fatma: 01094779989", "Eng. Hend: 01030051953"]
+  "contacts": [
+    "Ms. Fatma: 01094779989",
+    "Eng. Hend: 01030051953"
+  ]
 }

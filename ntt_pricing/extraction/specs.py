@@ -40,7 +40,8 @@ _DEVICE_PATTERNS = [
 _CURVE_RE = re.compile(r"\b([BCDKZ])\s*\d", re.IGNORECASE)
 _CURVE_ALT_RE = re.compile(r"\bcurve\s*([BCDKZ])\b|\b([BCDKZ])\s*curve\b", re.IGNORECASE)
 _POLES_RE = re.compile(r"\b([1-4])\s*[pP]\b|\b([1-4])\s*-?\s*pole", re.IGNORECASE)
-_KA_RE = re.compile(r"(\d+(?:\.\d+)?)\s*kA", re.IGNORECASE)
+# breaking capacity — tolerate "36KA", "50K.A", "34.5 kA", "25 K.A"
+_KA_RE = re.compile(r"(\d+(?:\.\d+)?)\s*K\.?\s*A\b", re.IGNORECASE)
 _AMP_RE = re.compile(r"(\d+(?:\.\d+)?)\s*A(?![a-zA-Z])")
 _VOLT_RE = re.compile(r"(\d{2,4})\s*V(?![a-zA-Z])")
 _MANUF_RE = re.compile(r"schneider|abb|siemens|eaton|legrand|hager|chint", re.IGNORECASE)

@@ -50,32 +50,34 @@ DEFAULT_ENCLOSURES: List[EnclosureTier] = [
 
 @dataclass
 class SelectionPolicy:
-    """Component-selection standards — how the estimator picks a specific
-    catalog part for a device, beyond raw fuzzy text matching.
+    """How the estimator picks a specific catalog part for a device.
 
-    Encodes the engineering conventions an NTT estimator applies: the breaker
-    *series* per rating tier, a minimum breaking capacity (drawings often
-    under-state it), the standard rating a sub-feeder gets, and the frame the
-    main incomer uses.
+    The governing rule is **meet the electrical spec at the lowest cost**:
+    among every catalog part that satisfies the requirement (device type,
+    poles, rating, and breaking capacity ≥ the fault level), choose the
+    cheapest — regardless of series.  This is what drives accessory cost too,
+    since the chosen ratings and enclosure size determine the copper / wiring.
+
+    A ``preferred_series`` allow-list can still pin a family when a client or
+    consultant mandates one; leave it empty for pure least-cost.
     """
 
-    # MCCB series by rating tier: (max_amps, series_token, min_kA)
-    mccb_series_rules: List = field(default_factory=lambda: [
-        [630.0, "CVS", 25.0],       # feeders / distribution → Easypact CVS 25kA
-        [1000000.0, "NS", 50.0],    # large mains → NS-frame MCCB 50kA
-    ])
-    mcb_series: str = "iC60N"       # modular MCBs
-    mcb_ref_prefix: str = "A9F"     # prefer Acti9 order codes over duplicates
-    rccb_ref_prefix: str = "A9"
+    objective: str = "least_cost"        # "least_cost" | "series"
+    preferred_series: List = field(default_factory=list)   # e.g. ["CVS","NS"] to pin
+    allowed_manufacturers: List = field(default_factory=list)  # empty = any brand
+
+    # required breaking capacity when the drawing does not state one (kA)
+    default_min_ka: float = 15.0
+    mcb_default_ka: float = 10.0
+    mcb_ref_prefix: str = "A9F"          # prefer Acti9 order codes among ties
 
     # sub-feeder rule: a feed to a downstream board is rated to that board's
     # main, not to its diversified demand.
     flat_feeder_amps: float = 50.0
     flat_feeder_poles: int = 3
 
-    # main incomer: derive Icu from the system fault level, not the busbar note
-    main_mccb_min_amps: float = 800.0    # at/above this a main uses an NS MCCB
-    prefer_cheapest: bool = True
+    # main switchboard threshold (floor-standing enclosure above this)
+    main_mccb_min_amps: float = 800.0
     enabled: bool = True
 
     # metering distribution boards reserve space for kWh meters and use

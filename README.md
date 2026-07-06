@@ -163,6 +163,19 @@ parsed across all tabs, using the **F.P** (net final price) column. The whole
 Schneider catalog (10k+ refs) loads in one pass; keep it out of version
 control (`.gitignore` already excludes `*Data_Base*.xlsx`).
 
+### Component selection (least cost meeting spec)
+The estimator's governing rule is **meet the electrical spec at the lowest
+cost**: for each device it takes every catalog part that satisfies the
+requirement (device type, poles, rating, and breaking capacity ≥ the fault
+level) and picks the **cheapest** — regardless of series — because the chosen
+ratings and enclosure size also drive the copper/wiring. Non-breaker rows
+(mounting plates, blanking strips, bus-bar supports…) are filtered out so a
+€3 accessory is never chosen as a "160A MCCB". Set `selection.objective`
+to `"series"` with a `preferred_series` allow-list to pin a family when a
+client mandates one. Enclosures are likewise chosen as the cheapest standard
+NTT box that fits (loaded from the price book). See `SelectionPolicy` in
+[`ntt_pricing/config.py`](ntt_pricing/config.py).
+
 ### Custom pricing (`--config`)
 All commercial inputs live in one JSON file (`data/sample_config.json`):
 copper & busbar price, per-CSA wire rates, the **enclosure catalog** with
