@@ -6,12 +6,19 @@ REM  after that it just opens the tool in your browser.
 REM ============================================================
 cd /d "%~dp0"
 
-REM auto-update to the latest version if this is a git clone
-where git >nul 2>nul
-if %errorlevel%==0 (
+REM auto-update to the latest version if this is a git clone.
+REM find git on PATH, or fall back to the copy bundled with GitHub Desktop.
+set "GITEXE="
+where git >nul 2>nul && set "GITEXE=git"
+if "%GITEXE%"=="" (
+  for /d %%D in ("%LOCALAPPDATA%\GitHubDesktop\app-*") do (
+    if exist "%%D\resources\app\git\cmd\git.exe" set "GITEXE=%%D\resources\app\git\cmd\git.exe"
+  )
+)
+if not "%GITEXE%"=="" (
   if exist ".git" (
     echo Checking for the latest version...
-    git pull --ff-only 2>nul
+    "%GITEXE%" pull --ff-only 2>nul
   )
 )
 
