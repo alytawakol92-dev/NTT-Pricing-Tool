@@ -79,7 +79,13 @@ def load_ntt_workbook(path: str) -> List[CatalogItem]:
     wb = load_workbook(path, read_only=True, data_only=True)
     items: List[CatalogItem] = []
     seen = set()
-    for sheet in wb.sheetnames:
+    # Per-family tabs carry clean, structured descriptions ("MCCB, 3P, 200A,
+    # 25KA, CVS250B"); flat master tabs (DGQ) have generic ones that parse
+    # poorly.  Process the family tabs first so they win de-duplication, and
+    # use the master only to fill in parts no family tab lists.
+    _MASTER = {"dgq"}
+    order = sorted(wb.sheetnames, key=lambda s: 1 if s.strip().lower() in _MASTER else 0)
+    for sheet in order:
         ws = wb[sheet]
         rows = list(ws.iter_rows(values_only=True))
         hidx, header = _ntt_header(rows)

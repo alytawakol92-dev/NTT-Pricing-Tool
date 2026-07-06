@@ -49,10 +49,54 @@ DEFAULT_ENCLOSURES: List[EnclosureTier] = [
 
 
 @dataclass
+class SelectionPolicy:
+    """Component-selection standards — how the estimator picks a specific
+    catalog part for a device, beyond raw fuzzy text matching.
+
+    Encodes the engineering conventions an NTT estimator applies: the breaker
+    *series* per rating tier, a minimum breaking capacity (drawings often
+    under-state it), the standard rating a sub-feeder gets, and the frame the
+    main incomer uses.
+    """
+
+    # MCCB series by rating tier: (max_amps, series_token, min_kA)
+    mccb_series_rules: List = field(default_factory=lambda: [
+        [630.0, "CVS", 25.0],       # feeders / distribution → Easypact CVS 25kA
+        [1000000.0, "NS", 50.0],    # large mains → NS-frame MCCB 50kA
+    ])
+    mcb_series: str = "iC60N"       # modular MCBs
+    mcb_ref_prefix: str = "A9F"     # prefer Acti9 order codes over duplicates
+    rccb_ref_prefix: str = "A9"
+
+    # sub-feeder rule: a feed to a downstream board is rated to that board's
+    # main, not to its diversified demand.
+    flat_feeder_amps: float = 50.0
+    flat_feeder_poles: int = 3
+
+    # main incomer: derive Icu from the system fault level, not the busbar note
+    main_mccb_min_amps: float = 800.0    # at/above this a main uses an NS MCCB
+    prefer_cheapest: bool = True
+    enabled: bool = True
+
+    # metering distribution boards reserve space for kWh meters and use
+    # standard NTT enclosure sizes by incomer rating (H×W×D cm).
+    reserve_kwhm_space: bool = True
+    metering_enclosures: List = field(default_factory=lambda: [
+        # [max_incomer_amps, height_cm, width_cm, depth_cm]
+        [160.0, 140.0, 80.0, 25.0],
+        [250.0, 140.0, 100.0, 30.0],
+        [400.0, 180.0, 100.0, 30.0],
+    ])
+    # main switchboards (incomer >= main_mccb_min_amps) are floor-standing
+    main_enclosure_cm: List = field(default_factory=lambda: [200.0, 140.0, 60.0])
+
+
+@dataclass
 class PricingConfig:
     """Full set of tunable inputs for a quotation run."""
 
     currency: str = "USD"
+    selection: SelectionPolicy = field(default_factory=SelectionPolicy)
 
     # commercial
     markup_pct: float = 15.0            # applied to material subtotal
@@ -114,6 +158,12 @@ class PricingConfig:
         for key, value in data.items():
             if key == "enclosures" and isinstance(value, list):
                 cfg.enclosures = [EnclosureTier(**e) for e in value]
+            elif key == "selection" and isinstance(value, dict):
+                pol = SelectionPolicy()
+                for k, v in value.items():
+                    if hasattr(pol, k):
+                        setattr(pol, k, v)
+                cfg.selection = pol
             elif hasattr(cfg, key):
                 setattr(cfg, key, value)
         return cfg

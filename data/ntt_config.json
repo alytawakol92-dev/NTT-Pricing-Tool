@@ -14,6 +14,20 @@
   "match_threshold": 60.0,
   "include_standard_accessories": true,
 
+  "selection": {
+    "mccb_series_rules": [[630, "CVS", 25], [1000000, "NS", 50]],
+    "mcb_series": "iC60N",
+    "mcb_ref_prefix": "A9F",
+    "rccb_ref_prefix": "A9",
+    "flat_feeder_amps": 50,
+    "flat_feeder_poles": 3,
+    "main_mccb_min_amps": 800,
+    "reserve_kwhm_space": true,
+    "metering_enclosures": [[160, 140, 80, 25], [250, 140, 100, 30], [400, 180, 100, 30]],
+    "main_enclosure_cm": [200, 140, 60],
+    "enabled": true
+  },
+
   "enclosures": [
     {"name": "NTT Wall 60x40x25",   "width_mm": 600,  "height_mm": 400,  "depth_mm": 250, "price": 210.0, "ip_rating": "IP42", "material": "Galvanized Sheet Steel 2 mm"},
     {"name": "NTT Wall 80x60x25",   "width_mm": 800,  "height_mm": 600,  "depth_mm": 250, "price": 320.0, "ip_rating": "IP42", "material": "Galvanized Sheet Steel 2 mm"},

@@ -44,24 +44,35 @@ def test_floor_boards_and_feeders():
     assert "MDB-TYPE 2" in boards
     assert "DB-GROUND FLOOR" in boards and "DB-FIRST FLOOR" in boards
 
-    # MDB carries the 1000A main + one feeder per floor DB
+    # MDB carries the 1000A main (NS-frame MCCB) + one feeder per floor DB
     mdb = [c for c in comps if c.board == "MDB-TYPE 2"]
-    assert any(c.spec.device_type == DeviceType.ACB and c.spec.rating_amps == 1000
+    assert any(c.spec.device_type == DeviceType.MCCB and c.spec.rating_amps == 1000
                for c in mdb)
-    assert sum(1 for c in mdb if c.spec.device_type == DeviceType.MCCB) == 2
+    # 1000A main + 2 floor feeders = 3 MCCBs
+    assert sum(1 for c in mdb if c.spec.device_type == DeviceType.MCCB) == 3
 
     # each floor DB has an MCCB incomer + flat feeders summing to the flat count
     ground = [c for c in comps if c.board == "DB-GROUND FLOOR"]
     assert any(c.spec.device_type == DeviceType.MCCB and c.spec.rating_amps == 160
                for c in ground)
-    flat_qty = sum(c.quantity for c in ground if c.spec.device_type == DeviceType.MCB)
-    assert flat_qty == 6
+    flats = [c for c in ground if c.spec.device_type == DeviceType.MCB]
+    assert sum(c.quantity for c in flats) == 6
+    # Rule 2: a flat feed is rated to the flat sub-DB's main (standard 50A 3P),
+    # not to its diversified demand.
+    assert all(c.spec.rating_amps == 50 and c.spec.poles == 3 for c in flats)
 
 
-def test_flat_feeder_sized_from_load():
-    # 6 flats at ~15 KVA (≈22A on 400V 3ph) → a 25/32A feeder, and 6 of them
+def test_flat_feeder_standard_rating():
+    # Rule 2: each flat feed = the flat sub-DB main (standard 50A 3P), one per flat
     seq = _floor_table(160, 6, 15)
     comps = extract_riser(_entries(seq))
     feeders = [c for c in comps if c.spec.device_type == DeviceType.MCB]
     assert feeders and feeders[0].quantity == 6
-    assert 20 <= feeders[0].spec.rating_amps <= 40
+    assert feeders[0].spec.rating_amps == 50 and feeders[0].spec.poles == 3
+
+
+def test_flat_feeder_rating_configurable():
+    seq = _floor_table(160, 6, 15)
+    comps = extract_riser(_entries(seq), flat_feeder_amps=63)
+    feeders = [c for c in comps if c.spec.device_type == DeviceType.MCB]
+    assert feeders[0].spec.rating_amps == 63

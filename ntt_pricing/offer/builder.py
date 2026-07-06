@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Dict, List, Optional
 
 from ..config import PricingConfig
-from ..database import ComponentDatabase, match_all
+from ..database import ComponentDatabase, apply_selection, match_all
 from ..eplan import EplanClient
 from ..extraction import extract_components
 from ..layout import build_panel
@@ -38,6 +38,7 @@ def build_offer(sld_path: str, catalog_path: str,
     components = extract_components(sld_path)
     db = ComponentDatabase.load(catalog_path)
     match_all(components, db, threshold=config.match_threshold)
+    apply_selection(components, db, config.selection)
 
     client_obj = eplan_client or EplanClient()
     for c in components:
@@ -105,20 +106,40 @@ def _build_panel(item_no: int, name: str, comps: List[Component],
                                        unit_price=acc.unit_price))
             components_cost += acc.unit_price * acc.qty
 
+    # Rule 5: metering distribution boards reserve space for the kWh meters and
+    # use standard NTT enclosure sizes rather than a tight computed envelope.
+    metering = _is_metering_board(name)
+    if metering and config.selection.reserve_kwhm_space:
+        lines.append(ComponentLine(qty=1, ref="—", brand="NTT Panel",
+                                   description="SPACE FOR KWHM", group=GROUP_OUTGOING,
+                                   unit_price=0.0))
+
     # lay out just this board to size the enclosure + copper
     layout = build_panel(comps, config)
-    enclosure_cost = _enclosure_cost(layout, config)
     copper_cost = _copper_cost(comps, layout, config)
     labour_cost = sum(max(1, c.quantity) for c in comps) * config.labour_rate_per_component
 
-    # enclosure line in the BOM (NTT panel)
+    # enclosure size: floor-standing main, standard metering box, or computed
     ip_dims = "IP42"
-    w_cm, h_cm, d_cm = (round(layout.width_mm / 10), round(layout.height_mm / 10),
-                        round(layout.depth_mm / 10))
-    encl_ref = f"NTT-{int(layout.width_mm)}{int(layout.depth_mm)}"
+    incomer_a = incomer.spec.rating_amps if (incomer and incomer.spec.rating_amps) else 0
+    if incomer_a >= config.selection.main_mccb_min_amps:
+        std = tuple(config.selection.main_enclosure_cm)   # (H, W, D)
+    elif metering:
+        std = _metering_size(incomer, config)
+    else:
+        std = None
+    if std is not None:
+        h_cm, w_cm, d_cm = std
+        enclosure_cost = _enclosure_cost_for_cm(w_cm, h_cm, d_cm, config)
+    else:
+        enclosure_cost = _enclosure_cost(layout, config)
+        w_cm, h_cm, d_cm = (round(layout.width_mm / 10), round(layout.height_mm / 10),
+                            round(layout.depth_mm / 10))
+    encl_ref = f"NTT-{int(w_cm)}{int(h_cm)}{int(d_cm)}"
     lines.append(ComponentLine(
         qty=1, ref=encl_ref, brand=defaults.enclosure_type,
-        description=f"{defaults.enclosure_type} {ip_dims} , Dim {w_cm:g} * {h_cm:g} * {d_cm:g} Cm",
+        description=(f"{defaults.enclosure_type} {ip_dims} , Dim "
+                     f"{h_cm:g}H * {w_cm:g}W * {d_cm:g}D Cm"),
         group=GROUP_OUTGOING, unit_price=enclosure_cost))
 
     pre = components_cost + copper_cost + enclosure_cost + labour_cost
@@ -181,7 +202,11 @@ def _price_and_describe(c: Component, config: PricingConfig):
         elif c.match.score >= config.match_threshold:
             price = item.unit_price
             ref, brand = item.part_number, item.manufacturer
-            if not desc:
+            # a standards-based (policy) or confident match carries the exact
+            # catalog wording the engineer quotes — prefer it.
+            if item.description and (c.match.method == "policy" or c.match.confident):
+                desc = item.description
+            elif not desc:
                 desc = item.description
     return round(price, 2), ref, brand, desc
 
@@ -240,6 +265,33 @@ def _bb_size(amps: float) -> str:
         if amps <= s:
             return f"{s}A"
     return f"{int(amps)}A"
+
+
+def _is_metering_board(name: str) -> bool:
+    up = (name or "").upper()
+    return "KWHM" in up or "FLOOR" in up
+
+
+def _metering_size(incomer: Optional[Component], config: PricingConfig):
+    """Standard NTT metering-DB size (H, W, D cm) for the incomer rating."""
+    amps = (incomer.spec.rating_amps if incomer and incomer.spec.rating_amps else 160.0)
+    for row in config.selection.metering_enclosures:
+        if amps <= row[0]:
+            return float(row[1]), float(row[2]), float(row[3])
+    last = config.selection.metering_enclosures[-1]
+    return float(last[1]), float(last[2]), float(last[3])
+
+
+def _enclosure_cost_for_cm(w_cm, h_cm, d_cm, config: PricingConfig) -> float:
+    """Price an enclosure of a given size: nearest fitting standard tier, else
+    an area-based fabrication estimate."""
+    w, h, d = w_cm * 10, h_cm * 10, d_cm * 10
+    fitting = [t for t in config.enclosures if t.fits(w, h, d)]
+    if fitting:
+        tier = min(fitting, key=lambda t: t.volume_mm3())
+        return round(tier.price * (1 + config.enclosure_markup_pct / 100.0), 2)
+    area_m2 = 2 * (w * h + w * d + h * d) / 1e6
+    return round(area_m2 * 260.0 * (1 + config.enclosure_markup_pct / 100.0), 2)
 
 
 def _enclosure_cost(layout, config: PricingConfig) -> float:

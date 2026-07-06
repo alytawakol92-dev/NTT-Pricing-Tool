@@ -65,8 +65,8 @@ class OfferPanel:
         return {g: v for g, v in out.items() if v}
 
     def dimensions_text(self) -> str:
-        return (f"{self.enclosure_ip} , Dim {self.width_cm:g} * {self.height_cm:g} "
-                f"* {self.depth_cm:g} Cm")
+        return (f"{self.enclosure_ip} , Dim {self.height_cm:g}H * {self.width_cm:g}W "
+                f"* {self.depth_cm:g}D Cm")
 
 
 @dataclass

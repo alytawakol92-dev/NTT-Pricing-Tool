@@ -29,6 +29,7 @@ _FLOOR_HEADER_RE = re.compile(r"50\s*HZ.*KA", re.IGNORECASE)
 _AF_RE = re.compile(r"(\d+)\s*AF\b", re.IGNORECASE)
 _AT_RE = re.compile(r"(\d+)\s*AT\b", re.IGNORECASE)
 _A_KA_RE = re.compile(r"(\d+)\s*A\s*-\s*(\d+)\s*KA", re.IGNORECASE)
+_KA_RE = re.compile(r"(\d+(?:\.\d+)?)\s*KA", re.IGNORECASE)
 _TP_MCCB_RE = re.compile(r"(\d+)\s*A\s*(?:TP|3\s*PH)?\s*MCCB", re.IGNORECASE)
 _KVA_RE = re.compile(r"(\d+(?:\.\d+)?)\s*KVA", re.IGNORECASE)
 _FLAT_RE = re.compile(r"\bFLAT\s*-?\s*(\d+)\b", re.IGNORECASE)
@@ -53,7 +54,9 @@ def looks_like_stacked_riser(entries: List[Tuple[Tuple[float, float], str]]) -> 
     return (has_panelref or has_floor_tables) and collapsed
 
 
-def extract_riser(entries: List[Tuple[Tuple[float, float], str]]) -> List[Component]:
+def extract_riser(entries: List[Tuple[Tuple[float, float], str]],
+                  *, flat_feeder_amps: float = 50.0,
+                  flat_feeder_poles: int = 3) -> List[Component]:
     seq = [t for _p, t in entries if t and t.strip()]
     starts = [i for i, t in enumerate(seq) if _FLOOR_HEADER_RE.search(t)]
     if not starts:
@@ -73,9 +76,11 @@ def extract_riser(entries: List[Tuple[Tuple[float, float], str]]) -> List[Compon
             floor_feeders.append(incomer)
             components.append(_mk(tag, board, incomer, 1,
                                   _describe(incomer, "incomer")))
-        # outgoing flat feeders, sized from the declared flat loads
-        for amps, qty in _flat_feeders(seg):
-            spec = Specification(device_type=DeviceType.MCB, rating_amps=amps, poles=3)
+        # outgoing flat feeders — a feed to a flat sub-DB is rated to that
+        # board's main (standard flat feeder), not to its diversified demand.
+        for _amps, qty in _flat_feeders(seg):
+            spec = Specification(device_type=DeviceType.MCB,
+                                 rating_amps=flat_feeder_amps, poles=flat_feeder_poles)
             components.append(_mk(tag, board, spec, qty, _describe(spec, "flat")))
 
     # ---- MDB: main + floor feeders + services feeder ----
@@ -137,8 +142,9 @@ def _mdb_main(seq: List[str]) -> Optional[Specification]:
         m = _MAIN_RE.search(t)
         if m:
             amps = float(m.group(2))
-            dev = DeviceType.ACB if amps >= 800 else DeviceType.MCCB
-            spec = Specification(device_type=dev, rating_amps=amps, poles=3)
+            # a large main is a moulded/air-frame MCCB (e.g. NS1000N); the
+            # selection policy chooses the series and Icu from the fault level.
+            spec = Specification(device_type=DeviceType.MCCB, rating_amps=amps, poles=3)
             for u in seq:
                 k = re.search(r"(\d+(?:\.\d+)?)\s*kA", u)
                 if k and 20 <= float(k.group(1)) <= 100:
@@ -149,30 +155,46 @@ def _mdb_main(seq: List[str]) -> Optional[Specification]:
 
 
 def _services(seq: List[str], tag: "_Counter") -> List[Component]:
+    """Best-effort DB-SERV: the incomer/feeder MCCBs, contactors (stair /
+    elevator), CT and meter.  Riser services detail is dense and repeated, so
+    devices are de-duplicated by (type, rating)."""
     out: List[Component] = []
     seen = set()
+    board = "DB-SRV"
+
+    def add(spec, desc, key):
+        if key in seen:
+            return
+        seen.add(key)
+        out.append(_mk(tag, board, spec, 1, desc))
+
     for t in seq:
         up = t.upper()
         if _CONTACTOR_RE.search(up):
             a = re.search(r"(\d+)\s*A", t)
-            key = ("CT", a.group(1) if a else "")
-            if key in seen:
+            amps = float(a.group(1)) if a else None
+            role = " (stair lighting)" if "STAIR" in up else \
+                   " (elevator)" if "ELEV" in up else ""
+            add(Specification(device_type=DeviceType.CONTACTOR, rating_amps=amps, poles=3),
+                f"Contactor 3P {amps:g}A{role}" if amps else "Contactor 3P",
+                ("CT", amps, role))
+        elif "TP MCCB" in up or ("MCCB" in up and "TP" in up):
+            a = re.search(r"(\d+)\s*A", t)
+            if not a:
                 continue
-            seen.add(key)
-            spec = Specification(device_type=DeviceType.CONTACTOR,
-                                 rating_amps=float(a.group(1)) if a else None, poles=3)
-            desc = "Contactor " + (f"{spec.rating_amps:g}A 3P" if spec.rating_amps else "")
-            if "STAIR" in up:
-                desc += " (stair lighting)"
-            elif "ELEV" in up:
-                desc += " (elevator)"
-            out.append(_mk(tag, "DB-SRV", spec, 1, desc.strip()))
-        elif "WATTE METER" in up or "SMART" in up and "METER" in up:
-            if "METER" in seen:
-                continue
-            seen.add("METER")
-            spec = Specification(device_type=DeviceType.METER)
-            out.append(_mk(tag, "DB-SRV", spec, 1, "3PH Smart Watt-hour Meter"))
+            amps = float(a.group(1))
+            k = _KA_RE.search(t)
+            spec = Specification(device_type=DeviceType.MCCB, rating_amps=amps, poles=3,
+                                 breaking_capacity_ka=float(k.group(1)) if k else None)
+            add(spec, f"MCCB 3P {amps:g}A", ("MCCB", amps))
+        elif "C.T" in up or ("CT " in up and "/5" in t):
+            m = re.search(r"(\d+)\s*/\s*5", t)
+            ratio = f"{m.group(1)}/5 A" if m else "CT"
+            add(Specification(device_type=DeviceType.CT), f"Current Transformer {ratio}",
+                ("CTr", ratio))
+        elif "WATTE METER" in up or ("SMART" in up and "METER" in up):
+            add(Specification(device_type=DeviceType.METER), "3PH Smart Watt-hour Meter",
+                ("METER",))
     return out
 
 
