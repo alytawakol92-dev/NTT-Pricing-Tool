@@ -62,6 +62,12 @@ def extract_scattered(entries: List[Tuple[Tuple[float, float], str]]
     if not toks:
         return []
 
+    # MCCB feeder schedules write ratings as separate "63" "AT" / "100" "AF"
+    # (trip / frame) tokens — reconstruct those first.
+    atf = _extract_atf(toks)
+    if atf:
+        return atf
+
     rating_toks = [tk for tk in toks if _RATING_RE.search(tk.t)
                    and not _KA_RE.search(tk.t) and not _NOISE_RE.search(tk.t)]
     if len(rating_toks) < 2:
@@ -112,6 +118,84 @@ def _assign_quantities(rating_toks, incomer_tk, xmults):
         if best is not None:
             out[id(best)] = out.get(id(best), 0) + n
     return out
+
+
+_NUM_RE = re.compile(r"^\d+$")
+_ATF_BOARD_RE = re.compile(r"\b(MDB|SMDB|EMDB|MSB|MCC|MDBP?)\b", re.IGNORECASE)
+
+
+def _extract_atf(toks: List[_Tok]) -> List[Component]:
+    """Reconstruct MCCB feeders from split trip/frame tokens: "63" "AT",
+    "100" "AF" placed next to an "MCCB" symbol (common in PDF MDB SLDs)."""
+    at_toks = [t for t in toks if t.t.upper() == "AT"]
+    af_toks = [t for t in toks if t.t.upper() == "AF"]
+    mccb_toks = [t for t in toks if "MCCB" in t.t.upper()]
+    if len(af_toks) < 2 or not mccb_toks:
+        return []
+
+    numbers = [t for t in toks if _NUM_RE.match(t.t)]
+
+    def value_at(marker: _Tok) -> Optional[int]:
+        # the trip number sits directly above its "AT" and the frame number
+        # above its "AF" — weight column (x) alignment so the two don't cross.
+        best, best_s = None, None
+        for n in numbers:
+            dx, dy = abs(n.x - marker.x), abs(n.y - marker.y)
+            if math.hypot(dx, dy) > 70:
+                continue
+            score = dx * 3 + dy
+            if best_s is None or score < best_s:
+                best, best_s = int(n.t), score
+        return best
+
+    def nearest(marker: _Tok, group) -> Optional[_Tok]:
+        best, best_d = None, None
+        for g in group:
+            d = math.hypot(g.x - marker.x, g.y - marker.y)
+            if d < 140 and (best_d is None or d < best_d):
+                best, best_d = g, d
+        return best
+
+    system_ka = _system_ka(toks)
+    board = _atf_board(toks)
+
+    raw: List[Tuple[Specification, int]] = []
+    for m in mccb_toks:
+        af = nearest(m, af_toks)
+        at = nearest(m, at_toks)
+        frame = value_at(af) if af else None
+        trip = value_at(at) if at else None
+        rating = trip or frame           # trip = actual rated current
+        if not rating:
+            continue
+        spec = Specification(device_type=DeviceType.MCCB, rating_amps=float(rating),
+                             poles=3, breaking_capacity_ka=system_ka)
+        if frame:
+            spec.raw_attributes["frame_af"] = frame
+        raw.append((spec, 1))
+
+    return _aggregate(raw, board) if raw else []
+
+
+def _system_ka(toks: List[_Tok]) -> Optional[float]:
+    for t in toks:
+        m = _KA_RE.search(t.t)
+        if m:
+            return float(m.group(1))
+    # "Isc=25" style split token
+    for i, t in enumerate(toks):
+        if "ISC" in t.t.upper():
+            mm = re.search(r"(\d+(?:\.\d+)?)", t.t)
+            if mm:
+                return float(mm.group(1))
+    return None
+
+
+def _atf_board(toks: List[_Tok]) -> str:
+    for t in toks:
+        if _ATF_BOARD_RE.search(t.t):
+            return t.t.strip().upper()
+    return "MDB"
 
 
 # --------------------------------------------------------------------------
