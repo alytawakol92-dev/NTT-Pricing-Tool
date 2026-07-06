@@ -1,0 +1,15 @@
+# One-click deploy blueprint for Render (https://render.com).
+# In Render: New + → Blueprint → connect this repo → it reads this file.
+services:
+  - type: web
+    name: ntt-pricing-tool
+    runtime: docker
+    plan: free               # free tier (sleeps when idle); upgrade for always-on + more RAM
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    autoDeploy: true         # redeploy automatically on every git push
+    envVars:
+      - key: APP_PASSWORD    # site password — set your own in the dashboard
+        sync: false
+      - key: RUN_RETENTION_MINUTES
+        value: "120"         # auto-delete uploads/offers after 2 hours

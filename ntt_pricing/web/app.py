@@ -18,10 +18,11 @@ import datetime
 import os
 import shutil
 import tempfile
+import time
 import traceback
 import uuid
 
-from flask import (Flask, abort, redirect, render_template, request,
+from flask import (Flask, Response, abort, redirect, render_template, request,
                    send_file, url_for)
 from werkzeug.utils import secure_filename
 
@@ -42,10 +43,51 @@ _ALLOWED_CONFIG = {".json"}
 _MAX_MB = 25
 
 
+# privacy controls (set as environment variables on the host)
+_APP_PASSWORD = os.environ.get("APP_PASSWORD", "").strip()
+_RETENTION_MIN = int(os.environ.get("RUN_RETENTION_MINUTES", "120"))
+
+
+def _sweep_old_runs() -> None:
+    """Delete run folders (uploads + generated offers) older than the
+    retention window, so nothing lingers on the server."""
+    cutoff = time.time() - _RETENTION_MIN * 60
+    try:
+        names = os.listdir(RUNS_DIR)
+    except OSError:
+        return
+    for name in names:
+        p = os.path.join(RUNS_DIR, name)
+        try:
+            if os.path.isdir(p) and os.path.getmtime(p) < cutoff:
+                shutil.rmtree(p, ignore_errors=True)
+        except OSError:
+            pass
+
+
 def create_app() -> Flask:
     app = Flask(__name__)
     app.config["MAX_CONTENT_LENGTH"] = _MAX_MB * 1024 * 1024
     os.makedirs(RUNS_DIR, exist_ok=True)
+
+    @app.route("/healthz")
+    def healthz():
+        return "ok", 200
+
+    @app.before_request
+    def _require_password():
+        # health check is always open so the host can probe the service
+        if request.path == "/healthz":
+            return None
+        # if APP_PASSWORD is set, gate the whole site behind HTTP basic auth
+        if not _APP_PASSWORD:
+            return None
+        auth = request.authorization
+        if auth and auth.password == _APP_PASSWORD:
+            return None
+        return Response(
+            "Authentication required.", 401,
+            {"WWW-Authenticate": 'Basic realm="NTT Pricing Tool"'})
 
     @app.route("/")
     def index():
@@ -54,6 +96,7 @@ def create_app() -> Flask:
 
     @app.route("/quote", methods=["POST"])
     def quote():
+        _sweep_old_runs()
         token = uuid.uuid4().hex[:12]
         run_dir = os.path.join(RUNS_DIR, token)
         os.makedirs(run_dir, exist_ok=True)
