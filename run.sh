@@ -6,6 +6,12 @@
 set -e
 cd "$(dirname "$0")"
 
+# auto-update to the latest version if this is a git clone
+if command -v git >/dev/null 2>&1 && [ -d .git ]; then
+  echo "Checking for the latest version..."
+  git pull --ff-only 2>/dev/null || true
+fi
+
 PY=python3
 command -v $PY >/dev/null 2>&1 || PY=python
 if ! command -v $PY >/dev/null 2>&1; then

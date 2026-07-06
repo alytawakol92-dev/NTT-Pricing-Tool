@@ -6,6 +6,15 @@ REM  after that it just opens the tool in your browser.
 REM ============================================================
 cd /d "%~dp0"
 
+REM auto-update to the latest version if this is a git clone
+where git >nul 2>nul
+if %errorlevel%==0 (
+  if exist ".git" (
+    echo Checking for the latest version...
+    git pull --ff-only 2>nul
+  )
+)
+
 REM find Python (py launcher or python on PATH)
 where py >nul 2>nul
 if %errorlevel%==0 (set PY=py) else (set PY=python)
