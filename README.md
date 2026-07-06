@@ -156,6 +156,13 @@ CSV or XLSX. Column headers are matched flexibly by alias (e.g. *Part
 Number / Ref / Catalog*, *Unit Price / List Price / Cost*), so your existing
 sheets usually work unchanged.
 
+**Multi-sheet price books** are detected automatically: a workbook with a
+tab per product family (CVS, NS, NSX, DIN-rail MCBs, ACB, Motor Starters,
+Meters, enclosures…), each with a `Descripion … Ref. No. … F.P` header, is
+parsed across all tabs, using the **F.P** (net final price) column. The whole
+Schneider catalog (10k+ refs) loads in one pass; keep it out of version
+control (`.gitignore` already excludes `*Data_Base*.xlsx`).
+
 ### Custom pricing (`--config`)
 All commercial inputs live in one JSON file (`data/sample_config.json`):
 copper & busbar price, per-CSA wire rates, the **enclosure catalog** with

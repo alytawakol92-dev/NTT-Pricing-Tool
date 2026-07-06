@@ -13,6 +13,11 @@ venv/
 output/
 *.tmp
 
+# Proprietary supplier price books — never commit real pricing
+*Data_Base*.xlsx
+*price*book*.xlsx
+data/*.xlsx
+
 # EPLAN runtime cache is regenerated; keep the checked-in seed only
 # (remove the next line if you want to version your own cache)
 # data/eplan_dimensions.json
