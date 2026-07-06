@@ -35,6 +35,7 @@ class PanelDefaults:
     control_voltage: str = "220 VAC"
     enclosure_type: str = "NTT Panel"
     ip_rating: str = "IP54"
+    enclosure_ip_label: str = "IP42"     # IP shown on the enclosure line / dims
     enclosure_material: str = "Galvanized Sheet Steel 2 mm"
     cu_insulation: str = "Tin Plated"
     temperature: str = "Temp = 40°C"

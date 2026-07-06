@@ -44,6 +44,9 @@ def extract_components(path: str) -> List[Component]:
     ext = os.path.splitext(path)[1].lower()
     if ext == ".json":
         return extract_from_json(path)
+    if ext == ".pdf":
+        from .pdf import extract_from_pdf
+        return extract_from_pdf(path)
     if ext in (".dxf", ".dwg"):
         if not _HAVE_EZDXF:
             raise RuntimeError(

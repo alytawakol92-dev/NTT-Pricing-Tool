@@ -148,6 +148,11 @@ panel quotation instead, or `--format both`.
     **Pole count (1P/3P) is not in these labels** — it is shown graphically —
     so it is inferred (default: ≥25A → 3P) and can be corrected via a load
     schedule with a phases column.
+* **PDF** — a drawing exported to PDF (with a text layer). The tokens are
+  scattered — the rating (`16A,1∅`), the device keyword (`MCB`) and the
+  quantity (`X9`) sit at different points — so a spatial reconstructor
+  re-associates them into components (needs `pymupdf`). Quantities from
+  scattered PDF text are approximate and worth a review.
 * **JSON** — a lossless export: `{"boards": [{"name", "parent", "components":
   [{"tag","description","quantity"}]}]}`. See `data/sample_sld.json`.
 

@@ -126,21 +126,37 @@ def _build_panel(item_no: int, name: str, comps: List[Component],
     # Metering boards reserve meter space (larger standard box); everything else
     # is sized to the computed component envelope. If a board genuinely exceeds
     # the local range, the largest local box is quoted with a flag for review.
-    ip_dims = "IP42"
+    ip_dims = defaults.enclosure_ip_label
     if metering:
         req_h, req_w, req_d = [v * 10 for v in _metering_size(incomer, config)]
         thermal_note = None
     else:
         req_w, req_h, req_d, thermal_note = _design_required_size(layout, incomer, comps)
-    tier, note = _select_local_enclosure(req_w, req_h, req_d, config)
-    enclosure_cost = round(tier.price * (1 + config.enclosure_markup_pct / 100.0), 2)
-    h_cm, w_cm, d_cm = round(tier.height_mm / 10), round(tier.width_mm / 10), round(tier.depth_mm / 10)
-    panel_notes = [n for n in (note, thermal_note) if n]
+
+    panel_notes = [n for n in (thermal_note,) if n]
+    if "prisma" in defaults.enclosure_type.lower():
+        # a type-tested modular system (Prisma SeT) is not one of the local
+        # sheet-steel boxes — quote it to the required size (rounded up).
+        import math
+        h_cm = math.ceil(req_h / 100) * 10
+        w_cm = math.ceil(req_w / 100) * 10
+        d_cm = max(25, math.ceil(req_d / 100) * 10)
+        enclosure_cost = round(_prisma_estimate(w_cm, h_cm, d_cm)
+                               * (1 + config.enclosure_markup_pct / 100.0), 2)
+        encl_ref = "PrismaSeT"
+    else:
+        tier, note = _select_local_enclosure(req_w, req_h, req_d, config)
+        enclosure_cost = round(tier.price * (1 + config.enclosure_markup_pct / 100.0), 2)
+        h_cm = round(tier.height_mm / 10)
+        w_cm = round(tier.width_mm / 10)
+        d_cm = round(tier.depth_mm / 10)
+        encl_ref = f"NTT-{int(h_cm)}{int(w_cm)}{int(d_cm)}"
+        if note:
+            panel_notes.append(note)
 
     lines.append(ComponentLine(
-        qty=1, ref=f"NTT-{int(h_cm)}{int(w_cm)}{int(d_cm)}",
-        brand=defaults.enclosure_type,
-        description=(f"{defaults.enclosure_type} {tier.ip_rating} , Dim "
+        qty=1, ref=encl_ref, brand=defaults.enclosure_type,
+        description=(f"{defaults.enclosure_type} {ip_dims} , Dim "
                      f"{h_cm:g}H * {w_cm:g}W * {d_cm:g}D Cm"),
         group=GROUP_OUTGOING, unit_price=enclosure_cost))
 
@@ -218,6 +234,17 @@ def _heat_dissipation(comps) -> float:
             per = 1.0
         total += per * max(1, c.quantity)
     return total
+
+
+def _prisma_estimate(w_cm, h_cm, d_cm) -> float:
+    """Rough Schneider Prisma SeT enclosure cost by size (EUR).
+
+    Prisma SeT is a type-tested modular system priced by frame/height; this is
+    an order-of-magnitude figure until the Prisma tabs of the price book are
+    wired in for exact frame + door + plate pricing.
+    """
+    volume_m3 = (w_cm / 100) * (h_cm / 100) * (d_cm / 100)
+    return round(300 + volume_m3 * 1400, 2)
 
 
 def _select_local_enclosure(req_w_mm, req_h_mm, req_d_mm, config):
