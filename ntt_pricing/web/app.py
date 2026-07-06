@@ -36,7 +36,7 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__
                         "..", "data")
 DATA_DIR = os.path.normpath(DATA_DIR)
 
-_ALLOWED_SLD = {".dxf", ".dwg", ".json"}
+_ALLOWED_SLD = {".dxf", ".dwg", ".pdf", ".json"}
 _ALLOWED_TABLE = {".csv", ".xlsx", ".xlsm"}
 _ALLOWED_CONFIG = {".json"}
 _MAX_MB = 25
@@ -141,7 +141,14 @@ def _process(req, run_dir: str):
     schedule = _save_upload(req, "schedule", run_dir, _ALLOWED_TABLE, required=False)
     config_path = _save_upload(req, "config", run_dir, _ALLOWED_CONFIG, required=False)
 
-    config = PricingConfig.load(config_path) if config_path else PricingConfig()
+    # default to the bundled NTT config (branding + least-cost selection +
+    # local enclosures) when the user does not upload their own
+    if config_path:
+        config = PricingConfig.load(config_path)
+    else:
+        default_cfg = os.path.join(DATA_DIR, "ntt_config.json")
+        config = (PricingConfig.load(default_cfg) if os.path.exists(default_cfg)
+                  else PricingConfig())
     _apply_form_overrides(config, req.form)
 
     offline = req.form.get("offline") == "on"

@@ -76,6 +76,9 @@ Dependencies: `ezdxf`, `openpyxl`, `rapidfuzz`, `requests`, `Jinja2`.
 
 ### Web interface (upload files in your browser)
 
+**Non-technical? See [GETTING_STARTED.md](GETTING_STARTED.md)** — download the
+ZIP and double-click `run.bat` (Windows) or `run.sh` (Mac/Linux).
+
 ```bash
 python -m ntt_pricing.web        # opens http://127.0.0.1:5000
 ```

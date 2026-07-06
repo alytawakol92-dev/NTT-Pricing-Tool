@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 from ..config import PricingConfig
-from ..database import ComponentDatabase, match_all
+from ..database import ComponentDatabase, apply_selection, match_all
 from ..eplan import EplanClient
 from ..extraction import extract_components
 from ..layout import build_panel
@@ -59,6 +59,7 @@ def generate_quotation(
     components = extract_components(sld_path)
     db = ComponentDatabase.load(catalog_path)
     match_all(components, db, threshold=config.match_threshold)
+    apply_selection(components, db, config.selection)   # least-cost meeting spec
 
     schedule: List[LoadScheduleEntry] = []
     issues: List[ValidationIssue] = []
