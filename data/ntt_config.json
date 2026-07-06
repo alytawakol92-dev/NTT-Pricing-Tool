@@ -366,33 +366,6 @@
       "price": 182.42,
       "ip_rating": "IP42",
       "material": "Galvanized Sheet Steel"
-    },
-    {
-      "name": "NTT Floor 180x100x40",
-      "width_mm": 1000,
-      "height_mm": 1800,
-      "depth_mm": 400,
-      "price": 320.0,
-      "ip_rating": "IP54",
-      "material": "Floor-standing (est.)"
-    },
-    {
-      "name": "NTT Floor 200x140x60",
-      "width_mm": 1400,
-      "height_mm": 2000,
-      "depth_mm": 600,
-      "price": 520.0,
-      "ip_rating": "IP54",
-      "material": "Floor-standing (est.)"
-    },
-    {
-      "name": "NTT Floor 200x160x60",
-      "width_mm": 1600,
-      "height_mm": 2000,
-      "depth_mm": 600,
-      "price": 610.0,
-      "ip_rating": "IP54",
-      "material": "Floor-standing (est.)"
     }
   ],
   "panel_defaults": {

@@ -53,6 +53,7 @@ class OfferPanel:
     enclosure_cost: float = 0.0
     labour_cost: float = 0.0
     unit_price: float = 0.0           # per single panel, incl. markup
+    notes: List[str] = field(default_factory=list)
 
     @property
     def total_price(self) -> float:

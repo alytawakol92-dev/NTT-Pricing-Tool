@@ -79,6 +79,9 @@ def assemble_offer(components: List[Component], config: PricingConfig, *,
         company=_company(config), terms=OfferTerms(),
         signatories=_signatories(config), contacts=config.contacts or list(DEFAULT_CONTACTS),
     )
+    for p in offer_panels:
+        for n in p.notes:
+            offer.notes.append(f"Item {p.item_no} ({p.name}): {n}")
     return offer
 
 
@@ -119,26 +122,25 @@ def _build_panel(item_no: int, name: str, comps: List[Component],
     copper_cost = _copper_cost(comps, layout, config)
     labour_cost = sum(max(1, c.quantity) for c in comps) * config.labour_rate_per_component
 
-    # enclosure size: floor-standing main, standard metering box, or computed
+    # enclosure: choose the cheapest available LOCAL NTT enclosure that fits.
+    # Metering boards reserve meter space (larger standard box); everything else
+    # is sized to the computed component envelope. If a board genuinely exceeds
+    # the local range, the largest local box is quoted with a flag for review.
     ip_dims = "IP42"
-    incomer_a = incomer.spec.rating_amps if (incomer and incomer.spec.rating_amps) else 0
-    if incomer_a >= config.selection.main_mccb_min_amps:
-        std = tuple(config.selection.main_enclosure_cm)   # (H, W, D)
-    elif metering:
-        std = _metering_size(incomer, config)
+    if metering:
+        req_h, req_w, req_d = [v * 10 for v in _metering_size(incomer, config)]
+        thermal_note = None
     else:
-        std = None
-    if std is not None:
-        h_cm, w_cm, d_cm = std
-        enclosure_cost = _enclosure_cost_for_cm(w_cm, h_cm, d_cm, config)
-    else:
-        enclosure_cost = _enclosure_cost(layout, config)
-        w_cm, h_cm, d_cm = (round(layout.width_mm / 10), round(layout.height_mm / 10),
-                            round(layout.depth_mm / 10))
-    encl_ref = f"NTT-{int(w_cm)}{int(h_cm)}{int(d_cm)}"
+        req_w, req_h, req_d, thermal_note = _design_required_size(layout, incomer, comps)
+    tier, note = _select_local_enclosure(req_w, req_h, req_d, config)
+    enclosure_cost = round(tier.price * (1 + config.enclosure_markup_pct / 100.0), 2)
+    h_cm, w_cm, d_cm = round(tier.height_mm / 10), round(tier.width_mm / 10), round(tier.depth_mm / 10)
+    panel_notes = [n for n in (note, thermal_note) if n]
+
     lines.append(ComponentLine(
-        qty=1, ref=encl_ref, brand=defaults.enclosure_type,
-        description=(f"{defaults.enclosure_type} {ip_dims} , Dim "
+        qty=1, ref=f"NTT-{int(h_cm)}{int(w_cm)}{int(d_cm)}",
+        brand=defaults.enclosure_type,
+        description=(f"{defaults.enclosure_type} {tier.ip_rating} , Dim "
                      f"{h_cm:g}H * {w_cm:g}W * {d_cm:g}D Cm"),
         group=GROUP_OUTGOING, unit_price=enclosure_cost))
 
@@ -152,8 +154,89 @@ def _build_panel(item_no: int, name: str, comps: List[Component],
         width_cm=w_cm, height_cm=h_cm, depth_cm=d_cm, enclosure_ip=ip_dims,
         components_cost=round(components_cost, 2), copper_cost=round(copper_cost, 2),
         enclosure_cost=round(enclosure_cost, 2), labour_cost=round(labour_cost, 2),
-        unit_price=round(unit_price, 2),
+        unit_price=round(unit_price, 2), notes=panel_notes,
     )
+
+
+def _design_required_size(layout, incomer, comps):
+    """Manufacturability-aware internal size (mm) for a switchboard.
+
+    A board's size is not just the sum of component footprints — it is driven
+    by the busbar chamber, cable-entry/gland zone, side wireways and working
+    clearances (all scaled to the incomer rating), plus a heat check.  Sizing
+    to these standards keeps the panel buildable and lets the cheapest
+    enclosure that still fits be chosen.
+    """
+    placements = layout.placements
+    if placements:
+        used_w = max(p.x_mm + p.width_mm for p in placements)
+        used_h = max(p.y_mm + p.height_mm for p in placements)
+        used_d = max(p.depth_mm for p in placements)
+    else:
+        used_w = used_h = 300.0
+        used_d = 150.0
+
+    amps = incomer.spec.rating_amps if (incomer and incomer.spec.rating_amps) else 100.0
+
+    def by_rating(low, mid, high):
+        return low if amps <= 250 else mid if amps <= 630 else high
+
+    busbar_chamber = by_rating(150, 200, 300)   # top busbar zone (mm)
+    cable_zone = by_rating(150, 200, 300)        # bottom gland / cable zone
+    side_wireway = 2 * by_rating(60, 80, 100)    # vertical trunking both sides
+    depth_allow = by_rating(90, 150, 250)        # busbar + wiring behind plate
+
+    req_w = used_w + side_wireway + 60
+    req_h = used_h + busbar_chamber + cable_zone + 80
+    req_d = used_d + depth_allow
+
+    # heat check: rough device dissipation vs enclosure surface capacity
+    p_loss = _heat_dissipation(comps)
+    surface_m2 = 2 * (req_w * req_h + req_w * req_d + req_h * req_d) / 1e6
+    capacity_w = surface_m2 * 55.0               # ~55 W/m2 for a sealed steel box
+    thermal_note = None
+    if p_loss > capacity_w * 1.05:
+        thermal_note = (f"Estimated heat {p_loss:.0f} W exceeds sealed-enclosure "
+                        f"dissipation (~{capacity_w:.0f} W) — add ventilation/fan "
+                        f"or a larger enclosure.")
+    return round(req_w, 1), round(req_h, 1), round(req_d, 1), thermal_note
+
+
+def _heat_dissipation(comps) -> float:
+    """Rough total power loss (W): breakers dissipate roughly with rating."""
+    total = 0.0
+    for c in comps:
+        a = c.spec.rating_amps or 0.0
+        dt = c.spec.device_type
+        if dt in (DeviceType.MCCB, DeviceType.ACB):
+            per = 0.12 * a           # W per device (~15W at 125A ... scales up)
+        elif dt == DeviceType.MCB:
+            per = 0.05 * a
+        elif dt == DeviceType.CONTACTOR:
+            per = 0.08 * a
+        else:
+            per = 1.0
+        total += per * max(1, c.quantity)
+    return total
+
+
+def _select_local_enclosure(req_w_mm, req_h_mm, req_d_mm, config):
+    """Cheapest available local enclosure that fits (W×H×D in mm).
+
+    If nothing in the local range fits, quote the largest available box and
+    return a note so the estimator knows a bigger (floor) enclosure is needed.
+    """
+    if not config.enclosures:
+        raise ValueError("no enclosures configured")
+    fitting = [t for t in config.enclosures
+               if t.fits(req_w_mm, req_h_mm, req_d_mm)]
+    if fitting:
+        return min(fitting, key=lambda t: t.price), None
+    largest = max(config.enclosures, key=lambda t: t.volume_mm3())
+    note = (f"Required {req_h_mm/10:.0f}H×{req_w_mm/10:.0f}W×{req_d_mm/10:.0f}D cm "
+            f"exceeds the largest local enclosure ({largest.name}); "
+            f"a floor-standing enclosure is required — price to be confirmed.")
+    return largest, note
 
 
 # --------------------------------------------------------------------------
@@ -280,23 +363,6 @@ def _metering_size(incomer: Optional[Component], config: PricingConfig):
             return float(row[1]), float(row[2]), float(row[3])
     last = config.selection.metering_enclosures[-1]
     return float(last[1]), float(last[2]), float(last[3])
-
-
-def _enclosure_cost_for_cm(w_cm, h_cm, d_cm, config: PricingConfig) -> float:
-    """Price an enclosure of a given size: nearest fitting standard tier, else
-    an area-based fabrication estimate."""
-    w, h, d = w_cm * 10, h_cm * 10, d_cm * 10
-    fitting = [t for t in config.enclosures if t.fits(w, h, d)]
-    if fitting:
-        tier = min(fitting, key=lambda t: t.volume_mm3())
-        return round(tier.price * (1 + config.enclosure_markup_pct / 100.0), 2)
-    area_m2 = 2 * (w * h + w * d + h * d) / 1e6
-    return round(area_m2 * 260.0 * (1 + config.enclosure_markup_pct / 100.0), 2)
-
-
-def _enclosure_cost(layout, config: PricingConfig) -> float:
-    from ..pricing.engine import build_enclosure_line_item
-    return build_enclosure_line_item(layout, config).total
 
 
 def _copper_cost(comps, layout, config: PricingConfig) -> float:
