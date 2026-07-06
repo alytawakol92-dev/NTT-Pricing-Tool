@@ -95,3 +95,46 @@ def test_mcb_prefers_a9f_on_price_tie():
 
 def test_disabled_returns_none():
     assert select_item(_comp("MCCB 3P 200A"), _db(), SelectionPolicy(enabled=False)) is None
+
+
+def _frame_db():
+    rows = [
+        # exact 320A exists only as an expensive high-kA part (adjustable)
+        ("NSX400H320", "MCCB, 3P 320A , 70KA , NSX400H , Micrologic 2.3 Adj", 690.32),
+        # a cheaper 400A adjustable frame that can be set down to 320A
+        ("G40F3A400", "Circuit breaker, GoPact MCCB 400, 3 poles, 36kA, 400A rating, adjustable", 244.10),
+        # a cheap 400A FIXED — must NOT be used for a 320A trip (over-protection)
+        ("G40F3F400", "Circuit breaker, GoPact MCCB 400, 3 poles, 36kA, 400A rating, fixed", 200.00),
+        # a plain 63A fixed feeder + a big adjustable that must not be picked for 63A
+        ("G12F3F63", "Circuit breaker, GoPact MCCB 125, 3 poles, 30kA, 63A rating, fixed", 63.67),
+    ]
+    items = []
+    for ref, desc, price in rows:
+        it = CatalogItem(part_number=ref, description=desc, unit_price=price, currency="EUR")
+        it.spec = parse_specification(desc)
+        items.append(it)
+    return ComponentDatabase(items)
+
+
+def test_adjustable_larger_frame_chosen_when_cheaper():
+    db = _frame_db()
+    c = _comp("MCCB 3P 320A 25KA")
+    m = select_item(c, db, SelectionPolicy())
+    # 400A adjustable set to 320A (EUR244) beats the exact 320A part (EUR690)
+    assert m.item.part_number == "G40F3A400"
+
+
+def test_fixed_breaker_not_oversized():
+    db = _frame_db()
+    c = _comp("MCCB 3P 320A 25KA")
+    m = select_item(c, db, SelectionPolicy())
+    # a FIXED 400A must never protect a 320A circuit, even though it is cheapest
+    assert m.item.part_number != "G40F3F400"
+
+
+def test_small_feeder_not_jumped_to_big_frame():
+    db = _frame_db()
+    c = _comp("MCCB 3P 63A 25KA")
+    m = select_item(c, db, SelectionPolicy())
+    # 63A is below 0.7 x 400, so the big adjustable frame is not eligible
+    assert m.item.part_number == "G12F3F63"

@@ -34,6 +34,17 @@ _ACCESSORY = (
 )
 _BREAKERS = {DeviceType.MCCB, DeviceType.ACB, DeviceType.MCB}
 
+# an adjustable-trip breaker can be set down to ~0.7 x its frame rating
+_ADJ_MIN_FACTOR = 0.7
+_ADJ_WORDS = ("ADJ", "MICROLOGIC", "MICR", " ETS", "ELECTRONIC")
+
+
+def _is_adjustable(item: CatalogItem) -> bool:
+    """True if the breaker has an adjustable trip (so it can be set to a
+    current below its frame rating)."""
+    d = f"{item.description}".upper()
+    return any(w in d for w in _ADJ_WORDS)
+
 
 def round_up_ka(value: float) -> float:
     for k in (10, 15, 16, 25, 36, 50, 65, 70, 100, 150):
@@ -82,19 +93,26 @@ def select_item(component: Component, db: ComponentDatabase,
     required_a = spec.rating_amps
     required_ka = _required_ka(spec, policy)
     is_breaker = spec.device_type in _BREAKERS
+    is_mccb = spec.device_type in (DeviceType.MCCB, DeviceType.ACB)
 
-    def compliant(exact_rating: bool) -> List[CatalogItem]:
+    def rating_ok(it: CatalogItem, allow_up: bool) -> bool:
+        r = it.spec.rating_amps
+        # An adjustable MCCB/ACB in a larger frame can be set down to the
+        # required current (typically 0.7-1.0 x In), so a cheaper big-frame
+        # breaker set to the trip value is valid — this is how NTT quote them.
+        if is_mccb and _is_adjustable(it):
+            return r >= required_a - 0.5 and required_a >= _ADJ_MIN_FACTOR * r - 0.5
+        if allow_up:
+            return r >= required_a - 0.5
+        return abs(r - required_a) <= 0.5
+
+    def compliant(allow_up: bool) -> List[CatalogItem]:
         out = []
         for it in db.items:
             s = it.spec
-            if s.device_type != spec.device_type:
+            if s.device_type != spec.device_type or s.rating_amps is None:
                 continue
-            if s.rating_amps is None:
-                continue
-            if exact_rating:
-                if abs(s.rating_amps - required_a) > 0.5:
-                    continue
-            elif s.rating_amps < required_a - 0.5:
+            if not rating_ok(it, allow_up):
                 continue
             if spec.poles and s.poles and s.poles != spec.poles:
                 continue
@@ -108,8 +126,8 @@ def select_item(component: Component, db: ComponentDatabase,
             out.append(it)
         return out
 
-    # design specifies a rating: try that exactly, else the next size up
-    cands = compliant(exact_rating=True) or compliant(exact_rating=False)
+    # exact rating (or an adjustable larger frame set to it); else next size up
+    cands = compliant(allow_up=False) or compliant(allow_up=True)
     if not cands:
         return None
 
