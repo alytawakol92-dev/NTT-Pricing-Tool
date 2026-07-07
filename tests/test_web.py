@@ -83,3 +83,28 @@ def test_rejects_bad_extension(client):
     r = client.post("/quote", data=data, content_type="multipart/form-data")
     assert r.status_code == 302
     assert "error=" in r.headers["Location"]
+
+
+def _json_board(name, tag, desc):
+    import json
+    payload = {"boards": [{"name": name,
+                           "components": [{"tag": tag, "description": desc}]}]}
+    return io.BytesIO(json.dumps(payload).encode())
+
+
+def test_multiple_sld_upload_combines_panels(client):
+    # two drawings uploaded together must both appear as panels in one offer
+    data = {
+        "sld": [
+            (_json_board("DB-ALPHA", "Q1", "MCCB 3P 100A 25kA"), "alpha.json"),
+            (_json_board("DB-BETA", "Q1", "MCCB 3P 250A 36kA"), "beta.json"),
+        ],
+        "catalog": (_file("sample_pricing.csv"), "sample_pricing.csv"),
+        "project_name": "Multi", "offline": "on",
+    }
+    r = client.post("/quote", data=data, content_type="multipart/form-data")
+    assert r.status_code == 302
+    assert "/result/" in r.headers["Location"]
+    token = r.headers["Location"].rstrip("/").split("/")[-1]
+    tech = client.get(f"/result/{token}/doc/technical").data
+    assert b"DB-ALPHA" in tech and b"DB-BETA" in tech

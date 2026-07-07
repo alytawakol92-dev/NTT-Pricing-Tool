@@ -52,11 +52,16 @@ def generate_quotation(
     date: str = "",
     eplan_client: Optional[EplanClient] = None,
     include_panel: bool = True,
+    extra_sld_paths: Optional[List[str]] = None,
 ) -> PipelineResult:
     config = config or PricingConfig()
 
     # ---- Phase 1: extraction, matching, validation, component pricing --
+    # Several drawings may describe one project (a sheet per board group); read
+    # them all and combine their panels into a single offer.
     components = extract_components(sld_path)
+    for extra in (extra_sld_paths or []):
+        components.extend(extract_components(extra))
     db = ComponentDatabase.load(catalog_path)
     match_all(components, db, threshold=config.match_threshold)
     apply_selection(components, db, config.selection)   # least-cost meeting spec

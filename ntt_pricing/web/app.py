@@ -179,7 +179,9 @@ class _UserError(Exception):
 
 
 def _process(req, run_dir: str):
-    sld = _save_upload(req, "sld", run_dir, _ALLOWED_SLD, required=True)
+    # one or more single line diagrams (a project may be split across sheets)
+    slds = _save_uploads(req, "sld", run_dir, _ALLOWED_SLD, required=True)
+    sld, extra_slds = slds[0], slds[1:]
     catalog = _save_upload(req, "catalog", run_dir, _ALLOWED_TABLE, required=True)
     schedule = _save_upload(req, "schedule", run_dir, _ALLOWED_TABLE, required=False)
     config_path = _save_upload(req, "config", run_dir, _ALLOWED_CONFIG, required=False)
@@ -212,14 +214,16 @@ def _process(req, run_dir: str):
         client_name=meta_form["client_name"], quote_number=meta_form["quote_number"],
         date=meta_form["date"],
         eplan_client=EplanClient(api_key=eplan_key, offline=offline),
-        include_panel=include_panel,
+        include_panel=include_panel, extra_sld_paths=extra_slds,
     )
     if not result.components:
+        drawings = "the single line diagram" if not extra_slds \
+            else "any of the single line diagrams"
         raise _UserError(
-            "No devices could be read from the single line diagram, so the "
-            "offer is empty. The drawing's format may not be recognised — try "
-            "exporting it to DXF (or PDF with a text layer), or send the file "
-            "so the extractor can be tuned to it.")
+            f"No devices could be read from {drawings}, so the offer is empty. "
+            "The drawing's format may not be recognised — try exporting it to "
+            "DXF (or PDF with a text layer), or send the file so the extractor "
+            "can be tuned to it.")
     _finalize(run_dir, result, config, meta_form,
               company=req.form.get("company", "").strip())
     return result
@@ -254,6 +258,29 @@ def _save_upload(req, field, run_dir, allowed, required):
     path = os.path.join(run_dir, f"{field}{ext}")
     file.save(path)
     return path
+
+
+def _save_uploads(req, field, run_dir, allowed, required):
+    """Save every file uploaded under *field* (the input allows multiple) and
+    return their paths.  Each is checked against *allowed* and stored under a
+    distinct name so several drawings can be processed together."""
+    files = [f for f in req.files.getlist(field) if f and f.filename]
+    if not files:
+        if required:
+            raise _UserError(f"At least one {field} file is required.")
+        return []
+    paths = []
+    for i, file in enumerate(files):
+        name = secure_filename(file.filename)
+        ext = os.path.splitext(name)[1].lower()
+        if ext not in allowed:
+            raise _UserError(
+                f"{field} '{name}': '{ext or 'no extension'}' is not supported "
+                f"(allowed: {', '.join(sorted(allowed))}).")
+        path = os.path.join(run_dir, f"{field}_{i}{ext}")
+        file.save(path)
+        paths.append(path)
+    return paths
 
 
 def _finalize(run_dir, result, config, meta_form, company="") -> None:

@@ -66,9 +66,11 @@
       <p class="hint">Upload your single line diagram and price list. Load schedule and pricing config are optional.</p>
 
       <div class="file-row">
-        <label>Single line diagram <span class="req">*</span></label>
-        <input type="file" name="sld" accept=".dxf,.dwg,.pdf,.json" required>
+        <label>Single line diagram(s) <span class="req">*</span></label>
+        <input type="file" name="sld" accept=".dxf,.dwg,.pdf,.json" multiple required>
         <small>AutoCAD DWG or DXF, a PDF export, or a JSON export.
+          <b>You can select several drawings at once</b> (e.g. one sheet per
+          board group) — they are combined into a single offer.
           DWG needs a converter installed (LibreDWG / ODA).</small>
       </div>
       <div class="file-row">
