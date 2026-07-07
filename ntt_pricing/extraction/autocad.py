@@ -112,7 +112,21 @@ def extract_from_dxf(path: str) -> List[Component]:
         pos = _entity_pos(e)
         texts.append((pos, txt, e.dxf.layer))
 
-    # 1a) if the drawing carries little structured device data in blocks but is
+    entries = [((p[0], p[1]), t) for (p, t, _l) in texts]
+
+    # 1a) a whole-building consultant sheet that atomises each device into
+    #     separate "MCB" / "32A" / "1P" text tokens stacked in a column →
+    #     rebuild the devices geometrically and group them by named panel.
+    #     This is checked first: such sheets often also carry rating-only
+    #     symbol blocks, but the text reconstruction recovers the full schedule
+    #     (device type + rating + poles) that the blocks alone cannot.
+    from .panel_sld import extract_panel_sld, looks_like_panel_sld
+    if looks_like_panel_sld(entries):
+        comps = extract_panel_sld(entries)
+        if comps:
+            return comps
+
+    # 1b) if the drawing carries little structured device data in blocks but is
     #     a graphical SLD (breaker labels as free text), use the graphical
     #     extractor — it recovers panels, MCB+ELCB pairs and quantities. Blocks
     #     with only empty or non-device attributes (floor markers, blank symbol
@@ -120,7 +134,6 @@ def extract_from_dxf(path: str) -> List[Component]:
     device_blocks = sum(1 for ins in msp.query("INSERT")
                         if _has_device_attrs(ins))
     if device_blocks < 3:
-        entries = [((p[0], p[1]), t) for (p, t, _l) in texts]
         # a riser whose table text has collapsed onto a point → parse by the
         # preserved entity reading order rather than position
         from .riser import extract_riser, looks_like_stacked_riser
