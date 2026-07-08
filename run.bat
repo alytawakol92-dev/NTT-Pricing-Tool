@@ -15,10 +15,15 @@ if "%GITEXE%"=="" (
     if exist "%%D\resources\app\git\cmd\git.exe" set "GITEXE=%%D\resources\app\git\cmd\git.exe"
   )
 )
+REM the branch these updates are published to — pull it explicitly so the
+REM update works even if the clone is sitting on 'main'.
+set "NTT_BRANCH=claude/quotation-panel-design-tool-moy141"
 if not "%GITEXE%"=="" (
   if exist ".git" (
     echo Checking for the latest version...
-    "%GITEXE%" pull --ff-only 2>nul
+    "%GITEXE%" fetch --quiet origin %NTT_BRANCH% 2>nul
+    "%GITEXE%" checkout --quiet %NTT_BRANCH% 2>nul
+    "%GITEXE%" merge --ff-only "origin/%NTT_BRANCH%" 2>nul
   )
 )
 

@@ -6,10 +6,15 @@
 set -e
 cd "$(dirname "$0")"
 
-# auto-update to the latest version if this is a git clone
+# auto-update to the latest version if this is a git clone. Pull the branch
+# these updates are published to explicitly, so it works even when the clone
+# is sitting on 'main'.
+NTT_BRANCH="claude/quotation-panel-design-tool-moy141"
 if command -v git >/dev/null 2>&1 && [ -d .git ]; then
   echo "Checking for the latest version..."
-  git pull --ff-only 2>/dev/null || true
+  git fetch --quiet origin "$NTT_BRANCH" 2>/dev/null || true
+  git checkout --quiet "$NTT_BRANCH" 2>/dev/null || true
+  git merge --ff-only "origin/$NTT_BRANCH" 2>/dev/null || true
 fi
 
 PY=python3
