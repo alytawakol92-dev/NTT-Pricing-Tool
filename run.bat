@@ -52,5 +52,9 @@ echo   Starting the NTT Pricing Tool...
 echo   A browser window will open at http://127.0.0.1:5000
 echo   Keep this window open while you use the tool. Close it to stop.
 echo.
+echo   NOTE: to upload AutoCAD .dwg files, install the free "ODA File
+echo         Converter" once from https://www.opendesign.com/guestfiles/oda_file_converter
+echo         The tool then finds it automatically. DXF and PDF need nothing extra.
+echo.
 python -m ntt_pricing.web
 pause

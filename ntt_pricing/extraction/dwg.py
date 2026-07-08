@@ -13,10 +13,22 @@ AutoCAD).  The path to a converter can also be forced with the
 """
 from __future__ import annotations
 
+import glob
 import os
 import shutil
 import subprocess
 import tempfile
+
+# common install locations to search when the converter is not on PATH — so a
+# Windows laptop "just works" after a one-time ODA File Converter install
+# (its installer does not add itself to PATH).
+_WELL_KNOWN = [
+    r"C:\Program Files\ODA\*\ODAFileConverter.exe",
+    r"C:\Program Files (x86)\ODA\*\ODAFileConverter.exe",
+    r"C:\Program Files\ODA\*\*\ODAFileConverter.exe",
+    "/Applications/ODAFileConverter.app/Contents/MacOS/ODAFileConverter",
+    "/usr/bin/dwg2dxf", "/usr/local/bin/dwg2dxf",
+]
 
 
 def dwg_converter() -> str | None:
@@ -27,6 +39,11 @@ def dwg_converter() -> str | None:
     for cand in ("dwg2dxf", "ODAFileConverter"):
         if shutil.which(cand):
             return cand
+    # not on PATH: look where the installers actually put it
+    for pattern in _WELL_KNOWN:
+        for hit in sorted(glob.glob(pattern), reverse=True):  # newest version
+            if os.path.isfile(hit):
+                return hit
     return None
 
 
