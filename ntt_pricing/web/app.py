@@ -37,6 +37,10 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__
                         "..", "data")
 DATA_DIR = os.path.normpath(DATA_DIR)
 
+# bump this whenever the UI changes so users can confirm at a glance that
+# their local copy updated (shown as a badge on the page)
+APP_VERSION = "2026-07-08 · multi-file upload"
+
 _ALLOWED_SLD = {".dxf", ".dwg", ".pdf", ".json"}
 _ALLOWED_TABLE = {".csv", ".xlsx", ".xlsm"}
 _ALLOWED_CONFIG = {".json"}
@@ -92,7 +96,7 @@ def create_app() -> Flask:
     @app.route("/")
     def index():
         return render_template("index.html", error=request.args.get("error"),
-                               max_mb=_MAX_MB)
+                               max_mb=_MAX_MB, version=APP_VERSION)
 
     @app.route("/quote", methods=["POST"])
     def quote():

@@ -54,7 +54,10 @@
 <body>
 <header><div class="wrap">
   <div class="logo">NTT · Al-Tawakol Pricing Tool<small>Technical &amp; Commercial Offer Generator</small></div>
-  <a class="demo-link" href="/demo">▶ Try with sample data</a>
+  <div style="text-align:right">
+    <a class="demo-link" href="/demo">▶ Try with sample data</a>
+    <div style="font-size:11px;opacity:.8;margin-top:8px">version {{ version }}</div>
+  </div>
 </div></header>
 
 <main>
@@ -66,12 +69,14 @@
       <p class="hint">Upload your single line diagram and price list. Load schedule and pricing config are optional.</p>
 
       <div class="file-row">
-        <label>Single line diagram(s) <span class="req">*</span></label>
-        <input type="file" name="sld" accept=".dxf,.dwg,.pdf,.json" multiple required>
+        <label>Single line diagram(s) <span class="req">*</span>
+          <span style="color:var(--accent);font-weight:700">— pick several at once</span></label>
+        <input type="file" id="sld" name="sld" accept=".dxf,.dwg,.pdf,.json" multiple required>
+        <div id="sld-list" style="font-size:12.5px;color:var(--brand);font-weight:600;margin:6px 0 2px"></div>
         <small>AutoCAD DWG or DXF, a PDF export, or a JSON export.
-          <b>You can select several drawings at once</b> (e.g. one sheet per
-          board group) — they are combined into a single offer.
-          DWG needs a converter installed (LibreDWG / ODA).</small>
+          <b>Hold Ctrl (or Shift) to select several drawings in one go</b>
+          — e.g. one sheet per board group; they are combined into a single
+          offer. DWG needs a converter installed (LibreDWG / ODA).</small>
       </div>
       <div class="file-row">
         <label>Component price list <span class="req">*</span></label>
@@ -132,5 +137,18 @@
     </div>
   </form>
 </main>
+<script>
+  // show the chosen drawings so it is obvious several files were selected
+  var sld = document.getElementById('sld');
+  if (sld) sld.addEventListener('change', function () {
+    var box = document.getElementById('sld-list');
+    var n = sld.files.length;
+    if (!n) { box.textContent = ''; return; }
+    var names = [];
+    for (var i = 0; i < n; i++) names.push(sld.files[i].name);
+    box.textContent = '✓ ' + n + ' drawing' + (n > 1 ? 's' : '') +
+                      ' selected: ' + names.join(', ');
+  });
+</script>
 </body>
 </html>
