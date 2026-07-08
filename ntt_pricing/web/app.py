@@ -105,11 +105,22 @@ def create_app() -> Flask:
         except _UserError as exc:
             shutil.rmtree(run_dir, ignore_errors=True)
             return redirect(url_for("index", error=str(exc)))
+        except MemoryError:
+            shutil.rmtree(run_dir, ignore_errors=True)
+            return redirect(url_for("index", error=(
+                "The server ran out of memory processing these drawings. Try "
+                "uploading fewer drawings at once, or ask your admin to move "
+                "the site to a larger plan.")))
         except Exception:  # engine / parsing failure — show a friendly message
             shutil.rmtree(run_dir, ignore_errors=True)
             detail = traceback.format_exc(limit=2).strip().splitlines()[-1]
             return redirect(url_for("index",
                                     error=f"Could not process the files: {detail}"))
+        finally:
+            # the price-book load + DWG conversions are memory-heavy; release
+            # promptly so a small (512 MB) instance survives back-to-back jobs
+            import gc
+            gc.collect()
         return redirect(url_for("result", token=token))
 
     @app.route("/demo")

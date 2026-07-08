@@ -29,6 +29,10 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
 COPY . .
 
-# gunicorn: honour the platform's $PORT; long timeout for big price books.
-# On a small (512 MB) instance set WEB_CONCURRENCY=1 to save memory.
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8080} --workers ${WEB_CONCURRENCY:-2} --timeout 180 wsgi:app"]
+# gunicorn: honour the platform's $PORT.
+#  * default to ONE worker — the 13k-row price book + DWG conversions are
+#    memory-heavy, and a second worker doubles peak RAM on a 512 MB instance
+#    (raise WEB_CONCURRENCY on a larger plan);
+#  * long timeout so a multi-drawing job on a throttled CPU still finishes;
+#  * recycle the worker every so often to release memory between big jobs.
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8080} --workers ${WEB_CONCURRENCY:-1} --timeout 300 --max-requests 20 --max-requests-jitter 5 wsgi:app"]

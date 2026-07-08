@@ -13,3 +13,5 @@ services:
         sync: false
       - key: RUN_RETENTION_MINUTES
         value: "120"         # auto-delete uploads/offers after 2 hours
+      - key: WEB_CONCURRENCY  # 1 worker on the 512 MB free plan (avoids OOM on
+        value: "1"            # multi-drawing jobs); raise it on a larger plan
