@@ -38,6 +38,13 @@ echo "Installing / updating components..."
 python -m pip install --quiet --upgrade pip
 python -m pip install --quiet -r requirements.txt
 
+# Optional manual override for the DWG converter: a "converter_path.txt" file
+# next to this launcher, containing the full path to the converter binary.
+if [ -f converter_path.txt ]; then
+  export NTT_DWG2DXF="$(cat converter_path.txt)"
+  echo "Using DWG converter from converter_path.txt"
+fi
+
 echo
 echo "  Starting the NTT Pricing Tool..."
 echo "  A browser window will open at http://127.0.0.1:5000"

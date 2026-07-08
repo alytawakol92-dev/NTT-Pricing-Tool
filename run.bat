@@ -52,6 +52,15 @@ echo Installing / updating components...
 python -m pip install --quiet --upgrade pip
 python -m pip install --quiet -r requirements.txt
 
+REM Optional manual override: if the tool cannot auto-find the DWG converter,
+REM create a file "converter_path.txt" next to this launcher containing the
+REM full path to ODAFileConverter.exe. (Editing this .bat is not needed and
+REM would block auto-update.)
+if exist "converter_path.txt" (
+  set /p NTT_DWG2DXF=<converter_path.txt
+  echo Using DWG converter from converter_path.txt
+)
+
 echo.
 echo   Starting the NTT Pricing Tool...
 echo   A browser window will open at http://127.0.0.1:5000

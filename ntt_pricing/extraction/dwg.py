@@ -23,10 +23,20 @@ import tempfile
 # Windows laptop "just works" after a one-time ODA File Converter install
 # (its installer does not add itself to PATH).
 _WELL_KNOWN = [
+    # ODA File Converter (Windows) — the installer uses several layouts across
+    # versions: an ODA parent folder, or a top-level ODAFileConverter folder.
     r"C:\Program Files\ODA\*\ODAFileConverter.exe",
-    r"C:\Program Files (x86)\ODA\*\ODAFileConverter.exe",
     r"C:\Program Files\ODA\*\*\ODAFileConverter.exe",
+    r"C:\Program Files\ODAFileConverter*\ODAFileConverter.exe",
+    r"C:\Program Files (x86)\ODA\*\ODAFileConverter.exe",
+    r"C:\Program Files (x86)\ODA\*\*\ODAFileConverter.exe",
+    r"C:\Program Files (x86)\ODAFileConverter*\ODAFileConverter.exe",
+    # LibreDWG dwg2dxf (Windows), if the user installed that instead
+    r"C:\Program Files\LibreDWG\*\dwg2dxf.exe",
+    r"C:\Program Files (x86)\LibreDWG\*\dwg2dxf.exe",
+    # macOS
     "/Applications/ODAFileConverter.app/Contents/MacOS/ODAFileConverter",
+    # Linux
     "/usr/bin/dwg2dxf", "/usr/local/bin/dwg2dxf",
 ]
 

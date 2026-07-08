@@ -26,3 +26,4 @@ data/*.xlsx
 .DS_Store
 .idea/
 .vscode/
+converter_path.txt
